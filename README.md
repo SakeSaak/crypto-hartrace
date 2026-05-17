@@ -163,7 +163,7 @@ All outputs land in `outputs/tables/` (CSV / parquet) and `outputs/figures/` (PN
              Dominance and Applications in Risk Management and Option Pricing},
   school  = {Vrije Universiteit Amsterdam},
   year    = {2026},
-  type    = {{MSc} thesis},
+  type    = {Paper},
   note    = {{MSc} Econometrics \& Operations Research, Financial Track}
 }
 ```
