@@ -1,7 +1,7 @@
 # HAR-RS-DOW: Variance Forecasting and Risk Management for BTC-EUR
 
 > **MSc Econometrics & Operations Research thesis** — Financial Track, Vrije Universiteit Amsterdam (2025-2026)
-> Empirical study of HAR-family models for cryptocurrency volatility forecasting, with applications to Value-at-Risk, Expected Shortfall (Basel III), option pricing, and vol-managed trading.
+> Empirical study of HAR-family models as variance forecasters for BTC-EUR, with the canonical applications: Value-at-Risk, Expected Shortfall (Basel III mandated), option pricing, and density-based scenario analysis.
 
 [![Tests](https://img.shields.io/badge/tests-20%20passing-brightgreen)]() [![Python](https://img.shields.io/badge/python-3.10+-blue)]() [![License](https://img.shields.io/badge/license-MIT-green)]()
 
@@ -11,32 +11,45 @@
 
 A complete end-to-end research pipeline that:
 
-1. **Estimates a HAR-RS-DOW model** for BTC-EUR realized variance (winner of horse race over 9 alternatives — CRPS = 0.498 OOS, R²_oos = +0.44, DM-dominance p < 0.005)
-2. **Applies the variance forecasts** to risk management (Expected Shortfall Z1 = +1.73 conservative across Normal, Student-t, and Hansen skewed-t densities), option pricing (HAR-σ produces fair-value pricing closest to market clearing), and trading (HAR vol-target + trend overlay → Sharpe 0.94 ROBUST)
-3. **Deploys live on Bitvavo** with three-layer safety, ATR-trailing stops, and honest disclosure of two production bugs caught in the first live trade
+1. **Estimates a HAR-RS-DOW model** for BTC-EUR daily realized variance — the winner of an in-sample horse race over nine HAR-family alternatives (ΔBIC = 490 over runner-up; OOS CRPS = 0.498; R²_oos = +0.44; Diebold-Mariano dominance with p < 0.005 vs. all four nearest competitors)
+2. **Applies the variance forecasts to risk management** — the canonical domain for vol-forecasters: Value-at-Risk (Christoffersen-calibrated), Expected Shortfall (Acerbi-Szekely Z1 ∈ [+1.73, +2.11], conservative across Normal, Student-t and Hansen 1994 skewed-t densities), and density-based scenario analysis
+3. **Demonstrates an options-pricing application** — HAR-σ as input to Black-Scholes produces fair-value pricing closer to market clearing than constant- or rolling-window σ (edge €0.20 vs €0.86 / €0.29)
+4. **Implements the live-deployment infrastructure** — a Bitvavo trading executor with three-layer safety, demonstrating the gap between backtest and production via two encountered bugs (tick-size rounding, HMAC signature for GET-with-query)
 
 Full thesis report (PDF): [`outputs/thesis_progress_report.pdf`](outputs/thesis_progress_report.pdf)
 
 ## Key empirical findings
 
-| Result | Value | Verdict |
-|---|---|---|
-| HAR-RS-DOW vs runner-up (BIC) | ΔBIC = 490 | Bayes factor ~10¹⁰⁶ |
-| OOS CRPS over 1 312 days | 0.498 | vs 0.582 next best (-14%) |
-| Diebold-Mariano vs all alternatives | DM ∈ [-7.5, -6.9] | p < 0.005 |
-| Expected Shortfall Z1 (Acerbi-Szekely) | +1.73 to +2.11 | Conservative for Basel III |
-| HAR vol-target + trend overlay Sharpe | 0.94 ROBUST | OOS, sub-period stable |
-| ATR-stop + trend MA50 Sharpe (benchmark) | 1.14 | Marginally beats HAR |
+### Statistical performance (variance forecasting)
+
+| Metric | HAR-RS-DOW | Next-best baseline | Margin |
+|---|---|---|---|
+| In-sample BIC | -10 462 | -9 972 | ΔBIC = 490 (Bayes factor ~10¹⁰⁶) |
+| OOS CRPS (1 312 days) | 0.498 | 0.582 | -14% |
+| OOS R² (log-RV) | +0.44 | +0.25 | +76% relative |
+| DM-test vs. four nearest alternatives | dominant | — | p < 0.005 on all |
+| Multi-horizon h = 5 dominance | DM = -5.46 | — | p < 10⁻⁷ |
+
+### Risk-management calibration (the canonical HAR application)
+
+| Density assumption | ES α=1% | ES α=5% | Z1 statistic | Verdict |
+|---|---|---|---|---|
+| Normal | -5.93% | -4.59% | +2.11 / +1.90 | Conservative — Basel III adequate |
+| Student-t (ν=3) | -8.99% | -4.97% | +1.73 / +1.83 | Conservative |
+| Hansen skewed-t (ν=4.4, λ=+0.01) | -7.86% | -5.06% | +1.83 / +1.81 | Conservative |
+| Realized (1 312 OOS days) | -5.84% | -3.91% | — | — |
+
+Acerbi-Szekely (2014) Z1 > 0 across all three densities → HAR-driven ES forecasts are robust to density specification.
 
 ## Why this matters
 
-The thesis decomposes a long-standing empirical question: **HAR is statistically dominant, but where does that translate to economic value?** The answer is nuanced and matters:
+HAR-RS-DOW is, by construction, a **variance forecasting model** — it predicts the *magnitude* of future return variation, conditional on the heterogeneous-horizon information in past realized variance. This thesis evaluates whether that statistical edge translates into **the applications where variance forecasts are the right primary input**:
 
-- ✅ **Risk management**: HAR's variance edge produces Basel III-adequate VaR + ES forecasts
-- ✅ **Option pricing**: HAR-σ produces minimum-edge fair-value pricing (€0.20 vs €0.86 for constant σ)
-- ✅ **Position sizing within trend overlay**: HAR vol-target + MA50 is ROBUST across regimes
-- ❌ **Pure directional trading**: HAR predicts magnitude, not direction; simple trend signals dominate
-- ❌ **Retail HFT**: at <daily frequencies on €110 capital, fees destroy any edge
+- **Value-at-Risk and Expected Shortfall** (Basel III mandated risk measures): HAR produces conservatively-calibrated ES across three density specifications (Normal, Student-t, Hansen 1994 skewed-t), with Acerbi-Szekely Z1 ∈ [+1.73, +2.11]. Adequate for regulatory capital reservation.
+- **Option pricing**: HAR-σ as input to Black-Scholes produces minimum-edge fair-value pricing (€0.20 average mispricing vs €0.86 for constant σ and €0.29 for rolling-window σ). Material edge for any market-maker quoting derivatives.
+- **Density forecasting**: PIT-calibrated probabilistic predictions for risk-budgeting, stress testing, and scenario analysis.
+
+The thesis does **not** position HAR as a directional trading signal — that would conflate two distinct econometric problems (variance vs. expected return). A small set of trading experiments is included in the appendix as a *scope-of-applicability* check, but the core contribution is the variance-forecasting framework and its risk-management consequences.
 
 ## Architecture
 
@@ -58,8 +71,10 @@ crypto_hartrace/
 │   ├── B1, C1               # Signature plot + stylized facts
 │   ├── D1                   # Model horse race
 │   ├── E1, E2, E4b          # Walk-forward + VaR + multi-horizon
-│   ├── G1-G5                # Trading evaluation
-│   ├── H1-H6                # Multi-frequency, TA, robustness, ES, density, options
+│   ├── E2, H4               # VaR + Expected Shortfall (canonical applications)
+│   ├── H5                   # Density-specification robustness check
+│   ├── H6                   # Option-pricing simulation (Black-Scholes with HAR-σ)
+│   ├── G1-G5, H1-H3         # Scope-of-applicability checks (trading)
 │   ├── btc_live_trader.py   # Live entry point
 │   └── build_defense_deck.py
 ├── tests/test_reproducibility.py  # 20 passing tests
