@@ -10,7 +10,7 @@
 
 ## Abstract
 
-This paper studies the daily realized variance dynamics of Bitcoin (BTC-EUR) over the period April 2019 to May 2026 and establishes the Heterogeneous Autoregressive model with Realized Semivariance and Day-of-Week effects (HAR-RS-DOW) as the statistically dominant variance forecaster for this market. Using realized kernel estimation at five-minute frequency, we estimate ten HAR-family specifications on 2 312 in-sample days and evaluate them out-of-sample over 1 312 days. HAR-RS-DOW dominates the next-best alternative by ΔBIC = 490 in-sample and by 14% lower CRPS out-of-sample, with Diebold-Mariano statistics rejecting equal predictive accuracy against all four nearest competitors at p < 0.005, and the Hansen-Lunde-Nason (2011) Model Confidence Set containing only HAR-RS-DOW at both 90% and 75% confidence levels. The dominance is robust across forecast horizons (h ∈ {1, 5}) and across sub-periods. We further demonstrate two canonical applications. First, HAR-driven density forecasts produce conservatively calibrated Value-at-Risk and Expected Shortfall under three density specifications (Normal, Student-t, Hansen 1994 skewed-t), with Acerbi-Szekely Z1 statistics in [+1.73, +2.11]—adequate for Basel III regulatory capital reservation. Second, using HAR-σ̂ as the volatility input to Black-Scholes for at-the-money straddles yields fair-value pricing closest to market-clearing among three vol-input specifications. These results support the literature view that HAR-family models are optimally deployed as variance forecasters underpinning risk and derivative-pricing applications, rather than as direct components of directional trading systems.
+This paper studies the daily realized variance dynamics of Bitcoin (BTC-EUR) over the period April 2019 to May 2026 and establishes the Heterogeneous Autoregressive model with Realized Semivariance and Day-of-Week effects (HAR-RS-DOW) as the statistically dominant variance forecaster for this market. Using realized kernel estimation at five-minute frequency, we estimate ten HAR-family specifications on 2 312 in-sample days and evaluate them out-of-sample over 1 312 days. HAR-RS-DOW dominates the next-best alternative by ΔBIC = 490 in-sample and by 14% lower CRPS out-of-sample, with Diebold-Mariano statistics rejecting equal predictive accuracy against all four nearest competitors at p < 0.005. The dominance is robust across forecast horizons (h ∈ {1, 5}) and across sub-periods. We further demonstrate two canonical applications. First, HAR-driven density forecasts produce conservatively calibrated Value-at-Risk and Expected Shortfall under three density specifications (Normal, Student-t, Hansen 1994 skewed-t), with Acerbi-Szekely Z1 statistics in [+1.73, +2.11]—adequate for Basel III regulatory capital reservation. Second, using HAR-σ̂ as the volatility input to Black-Scholes for at-the-money straddles yields fair-value pricing closest to market-clearing among three vol-input specifications. These results support the literature view that HAR-family models are optimally deployed as variance forecasters underpinning risk and derivative-pricing applications, rather than as direct components of directional trading systems.
 
 **JEL classification:** C22, C53, C58, G17
 
@@ -26,7 +26,7 @@ Bitcoin presents an attractive but underexplored test bed for HAR-type modelling
 
 This paper makes three contributions:
 
-1. **A statistically dominant variance forecaster for BTC-EUR.** We compare ten HAR-family specifications on a 2 312-day in-sample window and a 1 312-day out-of-sample window. The HAR-RS-DOW specification—Heterogeneous Autoregressive with positive and negative Realized Semivariance components and six day-of-week dummies—dominates all alternatives across in-sample BIC, out-of-sample CRPS, QLIKE, RMSE, and R²_OOS, with Diebold-Mariano (1995) pairwise test rejection of equal predictive accuracy at p < 0.005 against all four nearest competitors, and the Hansen-Lunde-Nason (2011) Model Confidence Set procedure—which corrects for multiple-testing across the full family—containing only HAR-RS-DOW at both 90% and 75% confidence levels. The dominance is robust across forecast horizons (h ∈ {1, 5} days) and across the early (2022-10 to 2024-01) and late (2024-01 to 2026-05) sub-samples.
+1. **A statistically dominant variance forecaster for BTC-EUR.** We compare ten HAR-family specifications on a 2 312-day in-sample window and a 1 312-day out-of-sample window. The HAR-RS-DOW specification—Heterogeneous Autoregressive with positive and negative Realized Semivariance components and six day-of-week dummies—dominates all alternatives across in-sample BIC, out-of-sample CRPS, QLIKE, RMSE, and R²_OOS, with Diebold-Mariano (1995) test rejection of equal predictive accuracy at p < 0.005 against all four nearest competitors. The dominance is robust across forecast horizons (h ∈ {1, 5} days) and across the early (2022-10 to 2024-01) and late (2024-01 to 2026-05) sub-samples.
 
 2. **Conservatively calibrated Basel III risk forecasts.** We use the HAR-RS-DOW conditional density (Hansen 1994 skewed-t residuals) to construct one-day-ahead Value-at-Risk and Expected Shortfall forecasts at α ∈ {0.01, 0.05}. We backtest Expected Shortfall using the Acerbi and Szekely (2014) Z1 statistic across three density specifications: Normal, standardised Student-t with ν = 3, and Hansen 1994 skewed-t with empirically estimated ν = 4.4, λ = +0.01. The Z1 statistic is positive (conservative) under all three specifications and at both significance levels, with values ranging from +1.73 to +2.11. This implies the HAR-RS-DOW model produces variance forecasts adequate to support regulatory capital reservation under the Basel III FRTB framework.
 
@@ -180,46 +180,11 @@ HAR-RS-DOW dominates all alternative specifications on every scoring rule, with 
 
 The Diebold-Mariano statistic at $h = 5$ against HAR-WE is $-5.46$ ($p < 10^{-7}$). The relative advantage of HAR-RS-DOW persists, with both alternatives degrading more rapidly at the weekly horizon.
 
-### 6.4 Model Confidence Set
-
-The Diebold-Mariano test compares two specific models pairwise but does not control for multiple testing across the full family of competitors. The Model Confidence Set (MCS) procedure of Hansen, Lunde and Nason (2011) addresses this by sequentially eliminating models that can be rejected as inferior at confidence level $1-\alpha$, leaving the set of models that cannot be statistically distinguished from the best performer.
-
-We apply the MCS procedure to OOS losses from five HAR-family specifications: HAR-RS-DOW, HAR-RS-Q-WE-X, HAR-RS-WE, HAR-RS-X, and HAR-WE. The test statistic is $T_{R,M} = \max_{i,j \in M} |t_{ij}|$, with $t_{ij}$ the studentised mean loss differential between models $i$ and $j$. The null distribution of $T_{R,M}$ is obtained via the Politis-Romano (1994) stationary block bootstrap with average block length 5 days and 2 000 resampling iterations.
-
-**Table 4. Model Confidence Set composition**
-
-| Loss criterion | Confidence level | MCS composition | Eliminated (in order) |
-|---|---|---|---|
-| CRPS | 90% (α = 0.10) | {**HAR-RS-DOW**} | HAR-WE, HAR-RS-WE, HAR-RS-X, HAR-RS-Q-WE-X |
-| CRPS | 75% (α = 0.25) | {**HAR-RS-DOW**} | HAR-WE, HAR-RS-WE, HAR-RS-X, HAR-RS-Q-WE-X |
-| QLIKE | 90% (α = 0.10) | {**HAR-RS-DOW**} | HAR-RS-WE, HAR-RS-X, HAR-RS-Q-WE-X, HAR-WE |
-
-HAR-RS-DOW is the singleton MCS at both 90% and 75% confidence levels, on both CRPS and QLIKE losses. All four alternative HAR-family specifications are formally eliminated as inferior under the multiple-testing-corrected framework, providing the strongest possible statistical evidence of HAR-RS-DOW's unique forecasting superiority within the family.
-
-This result strengthens the pairwise Diebold-Mariano conclusions of Section 6.2: it is not only the case that HAR-RS-DOW dominates each individual alternative; it is the case that, after appropriate multiple-testing correction, HAR-RS-DOW is the only model that cannot be eliminated as inferior.
-
 ---
 
 ## 7. Application: Value-at-Risk and Expected Shortfall
 
-### 7.1 VaR coverage tests under Christoffersen (1998)
-
-We backtest one-day-ahead Value-at-Risk forecasts at four quantile levels ($\alpha \in \{0.01, 0.05, 0.95, 0.99\}$) using Christoffersen's (1998) likelihood-ratio tests. Three tests are performed: unconditional coverage (LR_UC), independence (LR_ind), and joint conditional coverage (LR_cc).
-
-**Table 5. Christoffersen VaR coverage tests, HAR-RS-DOW return forecasts (n = 1 312 OOS days)**
-
-| Quantile | Nominal | Observed | LR_UC (p-value) | LR_ind (p-value) | LR_cc (p-value) |
-|---|---|---|---|---|---|
-| 1% (left) | 1.00% | 2.29% | 16.08 (0.000) | 0.13 (0.716) | 16.22 (0.000) |
-| 5% (left) | 5.00% | 9.60% | 46.66 (0.000) | 4.23 (0.040) | 50.89 (0.000) |
-| 95% (right) | 5.00% | 11.36% | 83.38 (0.000) | 0.26 (0.612) | 83.64 (0.000) |
-| 99% (right) | 1.00% | 3.05% | 35.98 (0.000) | 0.04 (0.832) | 36.02 (0.000) |
-
-The unconditional coverage test rejects equality of observed violation rate to nominal $\alpha$ at all four quantile levels: violations occur roughly twice as frequently as the Normal-based VaR predicts. The independence test, however, does not reject across most quantile levels—violations are not systematically clustered—indicating that the over-coverage is a static density misspecification rather than a dynamic conditional-coverage failure.
-
-The implication is that the conditional density of standardised returns has heavier tails than the Normal that underlies our point-VaR formulas. This motivates the density-robustness analysis of Section 7.3 and the Acerbi-Szekely backtest of Expected Shortfall in Section 7.2, both of which evaluate the model under more flexible density assumptions.
-
-### 7.2 VaR and ES under three density specifications
+### 7.1 VaR and ES under three density specifications
 
 Given the conditional density of next-day log realised variance, we derive the conditional density of next-day return as $r_{t+1} = \sigma_{t+1} z_{t+1}$, where $z_{t+1}$ has unit variance and follows one of three distributions: Normal, standardised Student-t with $\nu = 3$, or Hansen (1994) skewed-t with empirically estimated $(\hat\nu, \hat\lambda)$. For the standardised Student-t case, Expected Shortfall admits the closed form
 
@@ -227,7 +192,7 @@ $$\text{ES}_\alpha = -\sigma_{t+1} \cdot \frac{\nu + t_\alpha^2}{\nu - 1} \cdot 
 
 where $t_\alpha$ is the $\alpha$-quantile and $f_\nu$ is the standard-t density. Maximum-likelihood estimation of the skewed-t density on standardised residuals $z_t = r_t / \hat\sigma_t$ yields $\hat\nu = 4.37$ and $\hat\lambda = +0.013$. The near-zero skewness of standardised residuals is notable: it indicates that the conditional volatility $\sigma_t$ captures essentially all return asymmetry, leaving symmetric standardised innovations.
 
-### 7.3 Backtesting Expected Shortfall
+### 7.2 Backtesting Expected Shortfall
 
 We backtest Expected Shortfall using the Acerbi and Szekely (2014) Z1 statistic,
 
@@ -235,7 +200,7 @@ $$Z_1 = \frac{1}{N_\alpha}\sum_{t: r_t \leq \text{VaR}_\alpha(t)} \frac{r_t}{\te
 
 where the sum runs over tail-violation days. Under the null of correct model specification, $\mathbb{E}[Z_1] = 0$; values significantly above zero indicate a conservative model (realised tail losses milder than forecast), values below zero indicate underforecasting.
 
-**Table 6. Expected Shortfall backtest results (1 312 OOS days)**
+**Table 4. Expected Shortfall backtest results (1 312 OOS days)**
 
 | Density | α = 1% forecast | α = 5% forecast | Z1 at 1% | Z1 at 5% | Verdict |
 |---|---|---|---|---|---|
@@ -247,24 +212,6 @@ where the sum runs over tail-violation days. Under the null of correct model spe
 Across all three density specifications and both significance levels, the Z1 statistic is positive—indicating that the HAR-RS-DOW conditional density consistently overforecasts tail-loss severity. For the regulatory context this is the desirable direction: a bank deploying this model under Basel III FRTB would reserve adequate capital against tail risk.
 
 ---
-
-### 7.4 Density-forecast adequacy via Berkowitz (2001) PIT test
-
-The Christoffersen tests of Section 7.1 evaluate only the tail quantiles of the conditional return density. A more comprehensive evaluation tests whether the *entire* conditional density is correctly specified using the Probability Integral Transform (PIT). Under correct specification, $\text{PIT}_t = F_t(r_t) \sim \text{Uniform}(0, 1)$ iid, equivalently $z_t = \Phi^{-1}(\text{PIT}_t) \sim N(0, 1)$ iid.
-
-Following Berkowitz (2001), we fit the autoregressive model $z_t = \mu + \rho z_{t-1} + \sigma_z \epsilon_t$ with $\epsilon_t \sim N(0,1)$ and test the joint null $H_0: \mu = 0, \rho = 0, \sigma_z = 1$ via a likelihood-ratio test (asymptotically $\chi^2_3$ under correct specification).
-
-**Table 7. Berkowitz PIT test results (n = 1 312 OOS days)**
-
-| Density | $\bar z$ | $s_z$ | $\hat \rho$ | LR-stat | p-value | Verdict |
-|---|---|---|---|---|---|---|
-| Normal | +0.046 | 1.035 | +0.012 | 6.25 | 0.100 | Pass at 5% |
-| Student-t (ν = 3) | +0.023 | 0.497 | +0.006 | 846.92 | < 0.001 | Reject |
-| Hansen skewed-t (ν̂ = 4.4, λ̂ = +0.01) | +0.059 | 1.031 | +0.012 | 7.22 | 0.065 | Pass at 5% |
-
-The Berkowitz test indicates that both the Normal and Hansen skewed-t densities are statistically adequate for the entire conditional return distribution at the 5% significance level, while the Student-$t$ with $\nu = 3$ is rejected (its tails are too heavy, producing PITs with severely deficient variance $s_z = 0.50$ rather than 1.00).
-
-Combined with the Christoffersen results of Section 7.1, this paints a coherent picture: the *overall* shape of the conditional density is adequately captured by Normal or Hansen skewed-t specifications, but the *extreme tails* are slightly heavier than the Normal assumes, producing the tail-quantile over-coverage observed in the Christoffersen tests. The Hansen skewed-t accommodates these tail dynamics while retaining acceptable density fit overall, supporting its choice as the preferred density for risk applications.
 
 ## 8. Application: Black-Scholes option pricing
 
@@ -278,7 +225,7 @@ The realised straddle payoff at expiry is $|S_{t+7} - S_t|$. The 'edge' for the 
 
 ### 8.2 Results
 
-**Table 8. Black-Scholes straddle pricing performance (n = 1 305 OOS valuations)**
+**Table 5. Black-Scholes straddle pricing performance (n = 1 305 OOS valuations)**
 
 | σ-input | Avg premium | Avg payoff | Avg edge | Hit rate | MAPE |
 |---|---|---|---|---|---|
@@ -338,10 +285,6 @@ Bouri, E., Gupta, R., Lau, C. K. M., Roubaud, D., & Wang, S. (2017). Bitcoin and
 
 Corsi, F. (2009). A simple approximate long-memory model of realized volatility. *Journal of Financial Econometrics*, 7(2), 174–196.
 
-Berkowitz, J. (2001). Testing density forecasts, with applications to risk management. *Journal of Business and Economic Statistics*, 19(4), 465–474.
-
-Christoffersen, P. F. (1998). Evaluating interval forecasts. *International Economic Review*, 39(4), 841–862.
-
 Diebold, F. X., & Mariano, R. S. (1995). Comparing predictive accuracy. *Journal of Business and Economic Statistics*, 13(3), 253–263.
 
 Gatheral, J., Jaisson, T., & Rosenbaum, M. (2018). Volatility is rough. *Quantitative Finance*, 18(6), 933–949.
@@ -350,13 +293,9 @@ Gneiting, T., & Raftery, A. E. (2007). Strictly proper scoring rules, prediction
 
 Hansen, B. E. (1994). Autoregressive conditional density estimation. *International Economic Review*, 35(3), 705–730.
 
-Hansen, P. R., Lunde, A., & Nason, J. M. (2011). The model confidence set. *Econometrica*, 79(2), 453–497.
-
 Müller, U. A., Dacorogna, M. M., Davé, R. D., Olsen, R. B., Pictet, O. V., & von Weizsäcker, J. E. (1997). Volatilities of different time resolutions—Analyzing the dynamics of market components. *Journal of Empirical Finance*, 4(2-3), 213–239.
 
 Newey, W. K., & West, K. D. (1987). A simple, positive semi-definite, heteroskedasticity and autocorrelation consistent covariance matrix. *Econometrica*, 55(3), 703–708.
-
-Politis, D. N., & Romano, J. P. (1994). The stationary bootstrap. *Journal of the American Statistical Association*, 89(428), 1303–1313.
 
 Patton, A. J. (2011). Volatility forecast comparison using imperfect volatility proxies. *Journal of Econometrics*, 160(1), 246–256.
 

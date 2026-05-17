@@ -1,0 +1,4 @@
+loss,conf_level,mcs,eliminated
+CRPS,0.9,['HAR-RS-DOW'],"['HAR-WE', 'HAR-RS-WE', 'HAR-RS-X', 'HAR-RS-Q-WE-X']"
+CRPS,0.75,['HAR-RS-DOW'],"['HAR-WE', 'HAR-RS-WE', 'HAR-RS-X', 'HAR-RS-Q-WE-X']"
+QLIKE,0.9,['HAR-RS-DOW'],"['HAR-RS-WE', 'HAR-RS-X', 'HAR-RS-Q-WE-X', 'HAR-WE']"

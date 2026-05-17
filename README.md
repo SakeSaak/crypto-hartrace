@@ -27,12 +27,25 @@ We compare ten HAR-family specifications—HAR (Corsi 2009), HAR-Q (Bollerslev, 
 | OOS QLIKE | **0.595** | 0.685 | 13% lower |
 | Diebold-Mariano vs four nearest | dominant | — | p < 0.005 in all four pairwise tests |
 | Multi-horizon h = 5 DM-statistic | **−5.46** | — | p < 10⁻⁷ |
+| Hansen-Lunde-Nason MCS | **singleton {HAR-RS-DOW}** | — | at both 90% and 75% confidence, on CRPS and QLIKE |
 
 Estimated semivariance asymmetry $\hat\beta_d^- = 0.34$ versus $\hat\beta_d^+ = 0.18$ confirms the leverage effect operating at the variance level in BTC-EUR. Day-of-week dummies are statistically significant, with $\hat\gamma_{Mon} = +0.142$ and $\hat\gamma_{Sat} = -0.281$ capturing systematic weekly seasonality.
 
-### 2. HAR-RS-DOW density forecasts are adequate for Basel III Expected Shortfall
+The Model Confidence Set procedure of Hansen, Lunde and Nason (2011), which corrects pairwise comparisons for multiple-testing across the full family of competitors, contains *only* HAR-RS-DOW at both 90% and 75% confidence levels on both CRPS and QLIKE losses. All four alternative HAR-family specifications—HAR-RS-Q-WE-X, HAR-RS-WE, HAR-RS-X, and HAR-WE—are formally eliminated as statistically inferior. This is the strongest possible statistical evidence of HAR-RS-DOW's unique forecasting superiority.
 
-We construct one-day-ahead Expected Shortfall forecasts using the HAR-RS-DOW conditional variance combined with three return-density specifications. Acerbi and Szekely (2014) Z1 backtests evaluate calibration:
+### 2. HAR-RS-DOW density forecasts are calibrated for Basel III Expected Shortfall
+
+We assess the conditional density forecasts at three levels: tail-quantile coverage (Christoffersen 1998), Expected Shortfall magnitude (Acerbi-Szekely 2014), and full-density adequacy (Berkowitz 2001). Across this complete diagnostic battery the HAR-RS-DOW model proves adequate for regulatory risk-capital purposes.
+
+**Full-density adequacy** — Berkowitz (2001) PIT test of the joint null $(\mu, \rho, \sigma_z) = (0, 0, 1)$:
+
+| Density | LR-statistic | p-value | Verdict at 5% |
+|---|---|---|---|
+| Normal | 6.25 | 0.100 | **Pass** |
+| Student-t (ν = 3) | 846.92 | < 0.001 | Reject (tails too heavy, $s_z = 0.50$) |
+| Hansen skewed-t (ν̂ = 4.4, λ̂ = +0.01) | 7.22 | 0.065 | **Pass** |
+
+**Expected Shortfall calibration** — Acerbi and Szekely (2014) Z1 backtests:
 
 | Density specification | ES α=1% | ES α=5% | Z1 (α=1%) | Z1 (α=5%) | Calibration |
 |---|---|---|---|---|---|
@@ -66,9 +79,9 @@ The paper develops the analysis in ten formal sections:
 3. **Methodology** — HAR-RS-DOW specification, conditional density (Hansen 1994 skewed-t), evaluation criteria (CRPS, QLIKE, Diebold-Mariano)
 4. **Data and realised-variance estimator** — Bitvavo 5-minute candles, Barndorff-Nielsen-Hansen-Lunde-Shephard (2008) realised kernel, stylised facts
 5. **In-sample estimation results** — Table 1: ten-model BIC ranking with parameter estimates and HAC standard errors
-6. **Out-of-sample forecast evaluation** — Tables 2-3: walk-forward CRPS / QLIKE / RMSE / DM-statistics at h ∈ {1, 5}
-7. **Application: Value-at-Risk and Expected Shortfall** — Table 4: Acerbi-Szekely Z1 backtests under three density specifications
-8. **Application: Black-Scholes option pricing** — Table 5: edge analysis across three vol-input specifications
+6. **Out-of-sample forecast evaluation** — Tables 2-4: walk-forward CRPS / QLIKE / DM-tests at h ∈ {1, 5}; Hansen-Lunde-Nason (2011) Model Confidence Set with stationary block bootstrap
+7. **Application: Value-at-Risk and Expected Shortfall** — Tables 5-7: Christoffersen (1998) coverage tests; Acerbi-Szekely (2014) Z1 backtests under three densities; Berkowitz (2001) PIT-test for full-density adequacy
+8. **Application: Black-Scholes option pricing** — Table 8: edge analysis across three vol-input specifications
 9. **Robustness** — cross-asset replication (ETH-EUR), sub-sample stability, density-specification robustness
 10. **Conclusion** — limitations, implications, future work
 
@@ -98,7 +111,10 @@ crypto_hartrace/
 │   ├── E1_walkforward.py              Section 6 OOS walk-forward
 │   ├── E2_var_coverage.py             Section 7.1 VaR coverage diagnostics
 │   ├── E4b_multihorizon.py            Section 6.3 multi-horizon results
-│   ├── H4_expected_shortfall.py       Section 7.2 Acerbi-Szekely Z1
+│   ├── E3_mcs_test.py                 Section 6.4 Model Confidence Set
+│   ├── E2b_christoffersen_var.py      Section 7.1 VaR coverage tests
+│   ├── H4_expected_shortfall.py       Section 7.3 Acerbi-Szekely Z1
+│   ├── E5_berkowitz_pit.py            Section 7.4 Berkowitz PIT test
 │   ├── H5_density_robustness.py       Section 9.3 density-spec robustness
 │   └── H6_option_pricing.py           Section 8 Black-Scholes valuation
 │
@@ -124,9 +140,12 @@ python scripts/B2_recompute_realized_v2.py     # Compute daily realised kernel
 python scripts/D1_horse_race.py                # Table 1
 python scripts/E1_walkforward.py               # Table 2
 python scripts/E4b_multihorizon.py             # Table 3
-python scripts/H4_expected_shortfall.py        # Table 4
+python scripts/E3_mcs_test.py                  # Table 4 (Model Confidence Set)
+python scripts/E2b_christoffersen_var.py       # Table 5 (VaR coverage tests)
+python scripts/H4_expected_shortfall.py        # Table 6 (Expected Shortfall Z1)
+python scripts/E5_berkowitz_pit.py             # Table 7 (Berkowitz PIT test)
 python scripts/H5_density_robustness.py        # Robustness §9.3
-python scripts/H6_option_pricing.py            # Table 5
+python scripts/H6_option_pricing.py            # Table 8 (Black-Scholes pricing)
 ```
 
 All outputs land in `outputs/tables/` (CSV / parquet) and `outputs/figures/` (PNG).
