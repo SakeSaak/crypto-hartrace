@@ -322,6 +322,18 @@ class Executor:
             logger.error(f"BLOCKED: {ks.reason}")
             return self._empty_decision(now, '', 'blocked', ks.reason)
         
+        # 0b. Skip-weekend filter (H10: HAR-RS-DOW γ_saturday = -0.281)
+        # Weekend dagen hebben systematisch lagere vol → wijdere spreads → 
+        # duurdere executie. Skip-weekend levert +0.06 Sharpe + 25% minder fees.
+        if self.cfg.skip_weekend and now.weekday() in (5, 6):
+            dow_name = now.strftime('%A')
+            logger.info(f"SKIP WEEKEND: vandaag is {dow_name} "
+                        f"(DOW={now.weekday()}). HAR-RS-DOW DOW γ-coefficient "
+                        f"toont systematisch lage vol → wijdere spreads. Geen trade.")
+            return self._empty_decision(
+                now, '', 'skip_weekend',
+                f'weekend ({dow_name}, low-vol DOW per HAR-RS-DOW)')
+        
         # 1+2. Compute signal (strategy-specific)
         target_w, asof_str, sigma_meta, log_meta, ok, reason = self._compute_signal()
         if not ok:

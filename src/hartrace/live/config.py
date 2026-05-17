@@ -27,6 +27,9 @@ class TradingConfig:
     # Strategy parameters - shared
     market: str = 'BTC-EUR'
     max_leverage: float = 1.0  # Bitvavo spot is long-only, hard cap
+    # Skip-weekend filter (H10 finding: +0.06 Sharpe, -25% fees)
+    # Per HAR-RS-DOW: γ_saturday = -0.281 (lowest vol DOW) → wider spreads
+    skip_weekend: bool = True  # geen trades op zaterdag/zondag
     max_allocation_pct: float = 0.90  # max % van portfolio dat in BTC mag (rest = EUR buffer)
     
     # Strategy parameters - vol-managed (alleen relevant als strategy='vol_managed')
@@ -127,6 +130,8 @@ def load_config(
     
     # Strategy selection
     strategy = env.get('STRATEGY', 'pure_trend').lower()
+    skip_weekend_raw = env.get('SKIP_WEEKEND', 'true').lower()
+    skip_weekend = skip_weekend_raw != 'false'  # default True
     if strategy not in ('atr_trend', 'pure_trend', 'vol_managed'):
         raise ValueError(
             f"Invalid STRATEGY={strategy}. Use 'atr_trend', 'pure_trend' of 'vol_managed'."
@@ -143,6 +148,7 @@ def load_config(
     
     cfg = TradingConfig(
         api_key=api_key, api_secret=api_secret, operator_id=operator_id,
+        skip_weekend=skip_weekend,
         live_trading=live, dry_run=dry_run,
         strategy=strategy,
         max_daily_turnover_pct=max_turn,

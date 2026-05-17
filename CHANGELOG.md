@@ -41,3 +41,39 @@ ATR-state in `state/trader_state.json` is bewaard gebleven; rollback herstelt de
 
 ### Eerste live run met nieuwe strategie
 Verwacht: 18 mei 2026, 22:05 UTC, via launchd `com.sakesaakstra.btc-trader.plist`
+
+## [2026-05-17] Skip-weekend execution filter
+
+Empirische basis: `scripts/H10_timing_dow_test.py`
+
+### Wat is veranderd?
+- **Nieuwe config field**: `TradingConfig.skip_weekend: bool = True` (default ON)
+- **Env override**: `SKIP_WEEKEND=false` in `~/W8W.env` om uit te zetten
+- **Logica**: in `run_once()`, direct na kill-switch check: als vandaag DOW ∈ {5, 6}
+  (Saturday/Sunday), return decision met action='skip_weekend' zonder signal te
+  berekenen of order te plaatsen.
+
+### Backtest impact (H10)
+| Strategie | Sharpe | AnnRet | MDD | Fees | #Trades |
+|---|---|---|---|---|---|
+| Baseline (alle dagen) | +1.27 | +44.4% | -25.7% | 28.2% | 73 |
+| **Skip weekend** | **+1.33** | **+47.1%** | -23.6% | **21.3%** | **59** |
+
++0.06 Sharpe verbetering, **-25% relatief in fee-drag**, geen verslechtering van MDD.
+
+### Theoretische basis (HAR-RS-DOW)
+γ_saturday = -0.281 toont systematisch lage vol op zaterdagen. Lage vol correleert
+met:
+- Bredere bid-ask spreads (weinig liquiditeit)
+- Slechtere fill-quality voor maker orders
+- Hogere ruis-tot-signaal ratio in trend signalen
+
+Dit is een secundaire toepassing van HAR-RS-DOW: variance-modellering informeert
+ook execution-timing.
+
+### Rollback
+```bash
+# In ~/W8W.env: SKIP_WEEKEND=false
+# Of: git revert <commit>
+```
+
