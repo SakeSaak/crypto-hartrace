@@ -1,6 +1,6 @@
-# HAR-RS-DOW Variance Forecasting for Bitcoin
+# HAR-RS-DOW variance forecasting for BTC-EUR with Basel III ES and Black-Scholes applications
 
-> **MSc Econometrics & Operations Research thesis project** — Financial Track, Vrije Universiteit Amsterdam (2025-2026)
+> **MSc Econometrics & Operations Research thesis project**, Vrije Universiteit Amsterdam (2025-2026)
 
 This repository contains two distinct artifacts that share a codebase but have different status:
 
