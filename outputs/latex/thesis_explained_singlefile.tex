@@ -1,0 +1,1028 @@
+% =====================================================================
+% Thesis Explained Econometrically — Sake Saakstra (MSc EOR Financial Track)
+% Vrije Universiteit Amsterdam, 2025-2026
+% 
+% This document is a pedagogical walkthrough of the HAR-RS-DOW thesis project.
+% Compile on Overleaf with: pdfLaTeX (default) — no special compiler needed.
+% =====================================================================
+
+\documentclass[11pt,a4paper]{article}
+
+% ----- Encoding & language ---------------------------------------------------
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[dutch]{babel}
+\usepackage{lmodern}
+\usepackage{microtype}
+
+% ----- Layout ---------------------------------------------------------------
+\usepackage[a4paper, margin=2.5cm]{geometry}
+\usepackage{parskip}             % paragraph spacing instead of indent
+\usepackage{setspace}
+\onehalfspacing
+
+% ----- Math -----------------------------------------------------------------
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{mathtools}
+\usepackage{bm}
+
+% ----- Tables ---------------------------------------------------------------
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{longtable}
+
+% ----- Code listings --------------------------------------------------------
+\usepackage{listings}
+\usepackage{xcolor}
+
+\definecolor{codebg}{HTML}{F5F5F5}
+\definecolor{codekey}{HTML}{0066CC}
+\definecolor{codestr}{HTML}{A31515}
+\definecolor{codecom}{HTML}{008000}
+
+\lstset{
+    backgroundcolor=\color{codebg},
+    basicstyle=\ttfamily\footnotesize,
+    keywordstyle=\color{codekey}\bfseries,
+    stringstyle=\color{codestr},
+    commentstyle=\color{codecom}\itshape,
+    showstringspaces=false,
+    breaklines=true,
+    breakatwhitespace=true,
+    columns=fullflexible,
+    frame=single,
+    framesep=4pt,
+    rulecolor=\color{gray!30},
+    xleftmargin=10pt,
+    xrightmargin=10pt,
+    aboveskip=10pt,
+    belowskip=10pt,
+    language=Python,
+    morekeywords={pd, np, plt, sm, stats, optimize, gfn}
+}
+
+% ----- Hyperlinks & metadata ------------------------------------------------
+\usepackage[hidelinks]{hyperref}
+\hypersetup{
+    pdftitle={Thesis econometrisch uitgelegd},
+    pdfauthor={Sake Saakstra},
+    pdfsubject={HAR-RS-DOW variance forecasting for BTC-EUR},
+    pdfencoding=auto,
+    colorlinks=true,
+    linkcolor=blue!70!black,
+    urlcolor=blue!70!black,
+    citecolor=blue!70!black
+}
+
+
+% ----- Title block ----------------------------------------------------------
+\title{
+    \vspace{-1cm}
+    \Large\textbf{Thesis econometrisch uitgelegd}\\[0.3em]
+    \large Een leerdocument voor defense-voorbereiding\\[0.5em]
+    \normalsize\textit{HAR-RS-DOW variance forecasting voor BTC-EUR}
+}
+\author{
+    Sake Saakstra\\
+    \small MSc Econometrics \& Operations Research --- Financial Track\\
+    \small Vrije Universiteit Amsterdam
+}
+\date{2025--2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent Dit document is een pedagogische walkthrough van het HAR-RS-DOW thesis-project: van de econometrische intuïtie achter heterogeneous autoregressive volatility-modellen, via de wiskundige formulering, naar concrete Python-implementaties en hun financiële toepassingen in risk-management en option-pricing. Veertien zelfstandig leesbare hoofdstukken dekken alle onderdelen die in een defense-discussie aan bod kunnen komen.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+% =====================================================================
+% INHOUD — gegenereerd uit thesis_explained_econometrically.md
+% =====================================================================
+
+\hypertarget{waarom-har-uxfcberhaupt}{%
+\section{Waarom HAR überhaupt?}\label{waarom-har-uxfcberhaupt}}
+
+\hypertarget{intuuxeftie}{%
+\subsection{Intuïtie}\label{intuuxeftie}}
+
+Vol is niet random. Het clustert in tijd (Mandelbrot 1963: ``large changes tend to be followed by large changes''). Maar GARCH-modellen capteren dit met één geheugenparameter. De realiteit van financiële markten is \textbf{veelschaliger}:
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{Intraday traders} reageren op tick-veranderingen \,---\, hun vol-update gaat in minuten
+\item
+  \textbf{Day traders} reageren op dagelijkse closes \,---\, hun update in dagen
+\item
+  \textbf{Wekelijkse portfolio managers} herbalanceren wekelijks \,---\, update in dagen-tot-weken
+\item
+  \textbf{Maandelijkse institutionele flows} komen door met maand-cadens
+\end{itemize}
+
+\textbf{Müller et al.~(1997)} stelden voor: een vol-model moet \textbf{meerdere tijdsschalen tegelijk} capteren. Dit is de \emph{Heterogeneous Market Hypothesis}: vol op één schaal beïnvloedt vol op andere schalen via deze verschillende marktparticipanten.
+
+Corsi (2009) implementeerde dit eenvoudig: gebruik \emph{daily}, \emph{weekly} en \emph{monthly} aggregaten van realized variance als drie regressoren. Geen fractionele integratie nodig, geen complexe ARFIMA-machinery \,---\, gewoon OLS op drie gemiddelden.
+
+\hypertarget{wiskunde-basis-idee}{%
+\subsection{Wiskunde (basis-idee)}\label{wiskunde-basis-idee}}
+
+De realized variance \(RV_t\) op dag \(t\) is een schatting van de integrated variance op die dag:
+
+\[IV_t = \int_{t-1}^{t} \sigma^2(s) \, ds\]
+
+We willen voorspellen: \(E[\log RV_{t+1} \mid \mathcal{F}_t]\)
+
+Corsi's voorstel:
+
+\[\log RV_{t+1} = \beta_0 + \beta_d \log RV_t + \beta_w \overline{\log RV}_{t,t-4} + \beta_m \overline{\log RV}_{t,t-21} + \varepsilon_{t+1}\]
+
+Met:
+- \(\overline{\log RV}_{t,t-4} = \frac{1}{5}\sum_{i=0}^{4} \log RV_{t-i}\) (wekelijks gemiddelde)
+- \(\overline{\log RV}_{t,t-21} = \frac{1}{22}\sum_{i=0}^{21} \log RV_{t-i}\) (maandelijks gemiddelde)
+
+\textbf{Waarom log?} Twee redenen: (1) RV is rechts-scheef en heteroskedastisch, log maakt het bijna-normaal; (2) een lineair model op log-niveau is multiplicatief op het oorspronkelijke niveau, wat past bij vol-procesgedrag.
+
+\hypertarget{python-implementatie-har-basis}{%
+\subsection{Python implementatie (HAR-basis)}\label{python-implementatie-har-basis}}
+
+\begin{lstlisting}[language=Python]
+import pandas as pd
+import numpy as np
+import statsmodels.api as sm
+
+def har_features(log_rv: pd.Series) -> pd.DataFrame:
+    """Bouw HAR-features: daily, weekly, monthly aggregaten."""
+    X = pd.DataFrame(index=log_rv.index)
+    X['daily']   = log_rv.shift(1)                            # log RV_t
+    X['weekly']  = log_rv.shift(1).rolling(5).mean()          # 5-day avg
+    X['monthly'] = log_rv.shift(1).rolling(22).mean()         # 22-day avg
+    return X
+
+# Fit
+log_rv = np.log(rv_series)  # je realized variance series
+X = har_features(log_rv).dropna()
+y = log_rv.loc[X.index]
+
+X_with_const = sm.add_constant(X)
+model = sm.OLS(y, X_with_const).fit()
+print(model.summary())
+\end{lstlisting}
+
+\hypertarget{financiuxeble-toepassing}{%
+\subsection{Financiële toepassing}\label{financiuxeble-toepassing}}
+
+Daily HAR-σ wordt direct gebruikt in:
+- \textbf{Vol-managed portfolios} (Moreira-Muir 2017): positie-grootte ∝ 1/σ\_t
+- \textbf{Option pricing}: σ in Black-Scholes
+- \textbf{Risk-budgeting}: capital allocatie ∝ σ\_i⁻¹
+- \textbf{VaR-modellen}: σ als input voor quantile-mapping
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\hypertarget{realized-variance}{%
+\section{Realized variance}\label{realized-variance}}
+
+\hypertarget{intuuxeftie-1}{%
+\subsection{Intuïtie}\label{intuuxeftie-1}}
+
+Hoe meet je de ``vol van dag t''? Naïef: variance van returns. Maar binnen één dag heb je véél returns (1440 minuut-returns!). Dus:
+
+\[RV_t = \sum_{i=1}^{N} r_{t,i}^2\]
+
+waar \(r_{t,i}\) = i-de intraday return op dag t.
+
+\textbf{Maar er is een probleem}: bij hoge frequenties (1-min) is RV biased door \textbf{microstructure noise}:
+- Bid-ask bounce: prijs danst tussen bid en ask
+- Tick-discretisation: prijzen zijn integer veelvouden van tick-size
+- Asynchrone trades op verschillende exchanges
+
+Dit voegt valse ``vol'' toe die geen echte volatiliteit is.
+
+\hypertarget{wiskunde-signature-plot}{%
+\subsection{Wiskunde (signature plot)}\label{wiskunde-signature-plot}}
+
+Theoretisch zou \(RV_t\) bij steeds hogere frequentie naar de echte \(IV_t\) moeten convergeren. \textbf{Maar empirisch} zien we het tegenovergestelde:
+
+\[RV_t^{(\Delta)} \xrightarrow{\Delta \to 0} IV_t + \text{noise variance}\]
+
+De signature plot toont \(RV\) als functie van sampling-frequentie. Bij \textasciitilde5 minuten plateau-vorming = optimum tussen signal (meer data) en noise (microstructure).
+
+\textbf{Realized Kernel} (Barndorff-Nielsen, Hansen, Lunde, Shephard 2008):
+
+\[RK_t = \sum_{h=-H}^{H} k\left(\frac{h}{H}\right) \gamma_h(r)\]
+
+Waarbij \(\gamma_h(r) = \sum_i r_{t,i} r_{t,i-h}\) (autocovariance op lag h) en \(k(\cdot)\) = Parzen-kernel. Dit corrigeert voor noise door autocovariance-correctie.
+
+\hypertarget{python-implementatie}{%
+\subsection{Python implementatie}\label{python-implementatie}}
+
+\begin{lstlisting}[language=Python]
+def realized_variance(returns, freq='5min'):
+    """Simple RV per dag uit intraday returns."""
+    grouped = returns.groupby(returns.index.date)
+    return grouped.apply(lambda r: (r**2).sum())
+
+def realized_kernel(returns, H=10):
+    """Parzen-kernel realized kernel."""
+    def parzen(x):
+        ax = abs(x)
+        if ax <= 0.5: return 1 - 6*x**2 + 6*ax**3
+        elif ax <= 1: return 2*(1-ax)**3
+        else: return 0
+    
+    def daily_rk(r):
+        n = len(r)
+        rk = (r**2).sum()  # gamma_0
+        for h in range(1, min(H, n)):
+            gamma_h = (r.iloc[h:].values * r.iloc[:-h].values).sum()
+            rk += 2 * parzen(h/H) * gamma_h
+        return rk
+    
+    return returns.groupby(returns.index.date).apply(daily_rk)
+\end{lstlisting}
+
+\hypertarget{onze-empirische-bevinding-b1-signature-plot}{%
+\subsection{Onze empirische bevinding (B1 signature plot)}\label{onze-empirische-bevinding-b1-signature-plot}}
+
+\begin{longtable}[]{@{}lll@{}}
+\toprule
+Frequentie & Simple RV & Realized Kernel \\
+\midrule
+\endhead
+1-min & 33\% bias & 12\% bias \\
+5-min & 10\% bias & \textasciitilde10\% bias (lager variance) \\
+15-min & 8\% bias & 8\% bias \\
+\bottomrule
+\end{longtable}
+
+→ Wij gebruiken \textbf{RK @ 5-min} als primaire RV-meting voor BTC-EUR.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\hypertarget{het-har-model}{%
+\section{Het HAR-model}\label{het-har-model}}
+
+\hypertarget{intuuxeftie-verdiept}{%
+\subsection{Intuïtie verdiept}\label{intuuxeftie-verdiept}}
+
+HAR is geen black-box ML model. Het is een \textbf{lineaire regressie} met drie zorgvuldig gekozen regressoren. Het is dus volledig interpreteerbaar:
+
+\begin{itemize}
+\tightlist
+\item
+  \(\beta_d\) = ``hoeveel weegt gisteren?'' \,---\, meestal 0.30-0.50 voor crypto
+\item
+  \(\beta_w\) = ``hoeveel weegt de afgelopen week?'' \,---\, meestal 0.20-0.35
+\item
+  \(\beta_m\) = ``hoeveel weegt de afgelopen maand?'' \,---\, meestal 0.10-0.25
+\end{itemize}
+
+De som \(\beta_d + \beta_w + \beta_m\) is bijna altijd \textless{} 1 (mean-reversion).
+
+\hypertarget{waarom-werkt-het-ondanks-de-eenvoud}{%
+\subsection{Waarom werkt het ondanks de eenvoud?}\label{waarom-werkt-het-ondanks-de-eenvoud}}
+
+HAR is een \textbf{goede approximatie van long-memory} zonder de complexiteit van fractioneel geïntegreerde modellen (ARFIMA). Corsi toonde aan dat HAR's autocovariance-functie een \textbf{trage decay} heeft die empirisch waargenomen long-memory in vol nabootst.
+
+GPH-estimator op log-RV BTC-EUR: \(\hat{d} = 0.653\) → fractioneel geïntegreerd. HAR vangt dit met simpele OLS.
+
+\hypertarget{wiskunde-autocovariance}{%
+\subsection{Wiskunde \,---\, autocovariance}\label{wiskunde-autocovariance}}
+
+De impliciete autocovariance van het HAR-proces:
+
+\[\text{Cov}(\log RV_t, \log RV_{t+h}) = \beta_d \cdot \gamma(h-1) + \beta_w \cdot \frac{1}{5}\sum_{i=0}^{4}\gamma(h-1-i) + \beta_m \cdot \frac{1}{22}\sum_{i=0}^{21}\gamma(h-1-i)\]
+
+Deze decay is \emph{hyperbolisch}-achtig (niet exponentieel) → mimics long-memory.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\hypertarget{har-rs-semivariance}{%
+\section{HAR-RS (semivariance)}\label{har-rs-semivariance}}
+
+\hypertarget{intuuxeftie-2}{%
+\subsection{Intuïtie}\label{intuuxeftie-2}}
+
+Niet alle volatiliteit is gelijk. \textbf{Negatieve return-vol is gevaarlijker} dan positieve return-vol:
+- Een crash van 5\% voelt ergst dan een rally van 5\% (loss aversion)
+- Negatieve returns voorspellen meer vol dan positieve (leverage effect: r↓ → σ↑)
+- Voor risk management: linker-staart matters more
+
+\textbf{Patton \& Sheppard (2015)} stelden voor om RV te splitsen in twee componenten:
+
+\hypertarget{wiskunde}{%
+\subsection{Wiskunde}\label{wiskunde}}
+
+\[RS^+_t = \sum_{i: r_{t,i} > 0} r_{t,i}^2 \quad\text{(positive semivariance)}\]
+\[RS^-_t = \sum_{i: r_{t,i} < 0} r_{t,i}^2 \quad\text{(negative semivariance)}\]
+
+Eigenschap: \(RS^+_t + RS^-_t = RV_t\)
+
+HAR-RS vervangt \(\beta_d \log RV_t\) door \textbf{twee} termen:
+
+\[\log RV_{t+1} = \beta_0 + \beta_d^+ \log RS^+_t + \beta_d^- \log RS^-_t + \beta_w \overline{\log RV}_{t,t-4} + \beta_m \overline{\log RV}_{t,t-21} + \varepsilon\]
+
+\textbf{Empirische bevinding voor BTC-EUR}: \(\hat\beta_d^- = 0.34, \hat\beta_d^+ = 0.18\) → negative semivariance is bijna 2x informatiever dan positive. Dit is de leverage-effect op variance-niveau.
+
+\hypertarget{python-implementatie-1}{%
+\subsection{Python implementatie}\label{python-implementatie-1}}
+
+\begin{lstlisting}[language=Python]
+def realized_semivariance(returns):
+    """Splits RV in positief en negatief deel per dag."""
+    def daily_split(r):
+        pos = r[r > 0]
+        neg = r[r < 0]
+        return pd.Series({
+            'RS_plus': (pos**2).sum(),
+            'RS_minus': (neg**2).sum(),
+            'RV': (r**2).sum()  # sanity check
+        })
+    return returns.groupby(returns.index.date).apply(daily_split)
+\end{lstlisting}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\hypertarget{har-rs-dow}{%
+\section{HAR-RS-DOW}\label{har-rs-dow}}
+
+\hypertarget{intuuxeftie-3}{%
+\subsection{Intuïtie}\label{intuuxeftie-3}}
+
+BTC handelt 24/7, ook in het weekend \,---\, maar institutionele flows niet. Empirisch:
+- \textbf{Weekend vol ≈ 37\% lager} dan doordeweekse vol
+- \textbf{Maandag vol ≈ 14\% hoger} (catch-up na weekend)
+- Klassiek ``weekend effect'' in volatiliteit
+
+Dit is \textbf{systematisch} en \textbf{kalender-bepaald} \,---\, niet door HAR's vol-aggregaten te vangen. Een day-of-week dummy lost dit op.
+
+\hypertarget{wiskunde-1}{%
+\subsection{Wiskunde}\label{wiskunde-1}}
+
+Voeg 6 dummies toe (zondag = baseline):
+
+\begin{align*}
+\log RV_{t+1} &= \underbrace{\beta_0 + \beta_d^+ \log RS^+_t + \beta_d^- \log RS^-_t}_{\text{semivariance terms}} \\
+&\quad + \beta_w \overline{\log RV}_{t,t-4} + \beta_m \overline{\log RV}_{t,t-21} \\
+&\quad + \sum_{k=1}^{6} \gamma_k D_{k,t+1} + \varepsilon_{t+1}
+\end{align*}
+
+Waarbij:
+\[D_{k,t+1} = \begin{cases} 1 & \text{als dag } t+1 \text{ is dag } k \\ 0 & \text{anders} \end{cases}\]
+
+\textbf{Onze schattingen} voor BTC-EUR:
+
+\begin{longtable}[]{@{}lll@{}}
+\toprule
+Dag (k) & \(\hat\gamma_k\) & Interpretatie \\
+\midrule
+\endhead
+Maandag & +0.142 & Catch-up vol \\
+Dinsdag & +0.087 & Normale weekdag \\
+Woensdag & +0.063 & Mid-week \\
+Donderdag & +0.054 & Normale weekdag \\
+Vrijdag & +0.038 & Lichte stijging \\
+Zaterdag & −0.281 & Weekend stilte \\
+Zondag (baseline) & 0 & \,---\, \\
+\bottomrule
+\end{longtable}
+
+\hypertarget{python-extending-har-features}{%
+\subsection{Python (extending HAR features)}\label{python-extending-har-features}}
+
+\begin{lstlisting}[language=Python]
+def har_rs_dow_features(log_rs_plus, log_rs_minus, log_rv):
+    X = pd.DataFrame(index=log_rv.index)
+    X['daily_plus']  = log_rs_plus.shift(1)
+    X['daily_minus'] = log_rs_minus.shift(1)
+    X['weekly']      = log_rv.shift(1).rolling(5).mean()
+    X['monthly']     = log_rv.shift(1).rolling(22).mean()
+    
+    # DOW dummies (zondag = baseline, geen kolom)
+    for day, name in enumerate(['Mon','Tue','Wed','Thu','Fri','Sat']):
+        X[f'DOW_{name}'] = (X.index.dayofweek == day).astype(int)
+    return X
+\end{lstlisting}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\hypertarget{schatten-van-har}{%
+\section{Schatten van HAR}\label{schatten-van-har}}
+
+\hypertarget{intuuxeftie-4}{%
+\subsection{Intuïtie}\label{intuuxeftie-4}}
+
+HAR-modellen zijn lineair in parameters → \textbf{OLS is optimaal} (BLUE) als de residuen voldoen aan Gauss-Markov-voorwaarden. We schatten:
+
+\[\hat\beta = (X^\top X)^{-1} X^\top y\]
+
+Waarbij \(y = \log RV\) en \(X\) = HAR-features.
+
+\hypertarget{heteroskedasticiteit}{%
+\subsection{Heteroskedasticiteit?}\label{heteroskedasticiteit}}
+
+Log-RV is bijna homoskedastisch (vandaar de keuze voor log). OLS-standaardfouten zijn doorgaans betrouwbaar. Voor zekerheid gebruiken we \textbf{Newey-West HAC standaardfouten} (lag = 5 voor weekly persistence):
+
+\begin{lstlisting}[language=Python]
+import statsmodels.api as sm
+model = sm.OLS(y, X).fit(cov_type='HAC', cov_kwds={'maxlags': 5})
+\end{lstlisting}
+
+\hypertarget{multi-step-forecasts-h-1}{%
+\subsection{Multi-step forecasts (h \textgreater{} 1)}\label{multi-step-forecasts-h-1}}
+
+Voor h-stap vooruit voorspellen heb je twee opties:
+1. \textbf{Iterated}: substitueer voorspelde waarden in voor onbekende future RVs
+2. \textbf{Direct}: schat een aparte model per horizon
+
+We gebruiken \textbf{direct} omdat het robuuster is voor lange horizonnen:
+
+\begin{lstlisting}[language=Python]
+# Voor h=5 vooruit:
+y_h5 = log_rv.shift(-5)  # target is 5 dagen vooruit
+X_t  = har_features(log_rv)
+model_h5 = sm.OLS(y_h5, X_t).fit()
+\end{lstlisting}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\hypertarget{density-forecasting}{%
+\section{Density forecasting}\label{density-forecasting}}
+
+\hypertarget{intuuxeftie-5}{%
+\subsection{Intuïtie}\label{intuuxeftie-5}}
+
+HAR levert een \textbf{point forecast} \(\hat\mu_t = E[\log RV_{t+1} | \mathcal{F}_t]\). Maar voor risk-applicaties hebben we de hele \textbf{conditional density} nodig: \(p(\log RV_{t+1} | \mathcal{F}_t)\).
+
+We modelleren residuen \(\varepsilon_t = \log RV_t - \hat\mu_t\) via \textbf{Hansen 1994 skewed-t}:
+
+\hypertarget{wiskunde-hansen-1994-skewed-t}{%
+\subsection{Wiskunde \,---\, Hansen 1994 skewed-t}\label{wiskunde-hansen-1994-skewed-t}}
+
+\[
+f(z; \nu, \lambda) = bc \left[1 + \frac{1}{\nu-2}\left(\frac{bz+a}{1-\lambda \cdot \mathrm{sgn}(bz+a)}\right)^2\right]^{-(\nu+1)/2}
+\]
+
+Met:
+- \(a = 4\lambda c \frac{\nu-2}{\nu-1}\)
+- \(b^2 = 1 + 3\lambda^2 - a^2\)
+- \(c = \Gamma\left(\frac{\nu+1}{2}\right) / \left[\sqrt{\pi(\nu-2)} \cdot \Gamma\left(\frac{\nu}{2}\right)\right]\)
+
+\textbf{Parameters}:
+- \(\nu > 2\): degrees of freedom (lager = zwaardere staarten)
+- \(\lambda \in (-1, 1)\): skewness (-1 = max linkerschef, +1 = max rechterschef)
+
+\hypertarget{mle-voor-parameters}{%
+\subsection{MLE voor parameters}\label{mle-voor-parameters}}
+
+\begin{lstlisting}[language=Python]
+from scipy.special import gamma as gfn
+from scipy.optimize import minimize
+
+def hansen_skewt_pdf(z, eta, lam):
+    c = gfn((eta+1)/2) / (np.sqrt(np.pi*(eta-2)) * gfn(eta/2))
+    a = 4 * lam * c * (eta - 2) / (eta - 1)
+    b = np.sqrt(1 + 3*lam**2 - a**2)
+    z_thresh = -a/b
+    return np.where(
+        z < z_thresh,
+        b * c * (1 + 1/(eta-2) * ((b*z + a)/(1 - lam))**2)**(-(eta+1)/2),
+        b * c * (1 + 1/(eta-2) * ((b*z + a)/(1 + lam))**2)**(-(eta+1)/2))
+
+def neg_log_lik(params, z):
+    eta, lam = params
+    if eta <= 2.01 or eta > 50 or abs(lam) >= 0.99: return 1e10
+    pdf = hansen_skewt_pdf(z, eta, lam)
+    return -np.sum(np.log(pdf + 1e-300))
+
+# Fit on standardized residuals
+result = minimize(neg_log_lik, x0=[5, 0], args=(z_residuals,), method='Nelder-Mead')
+nu_hat, lambda_hat = result.x
+\end{lstlisting}
+
+\hypertarget{onze-empirische-schatting}{%
+\subsection{Onze empirische schatting}\label{onze-empirische-schatting}}
+
+Op \textbf{log-RV residuen} (residuen van HAR-RS-DOW):
+- \(\hat\nu = 9.23\) (matige fat tails)
+- \(\hat\lambda = +0.27\) (lichte rechterschef in log-RV)
+
+Op \textbf{standaardized returns} \(z_t = r_t/\hat\sigma_t\):
+- \(\hat\nu = 4.37\) (zwaardere fat tails)
+- \(\hat\lambda = +0.01\) ≈ 0 (\textbf{symmetrisch} \,---\, HAR-σ absorbeert de leverage)
+
+\textbf{Belangrijk inzicht}: dat \(\lambda \approx 0\) voor gestandaardiseerde returns is precies wat je wilt zien. Het betekent dat alle asymmetrie in BTC-returns \emph{al gevangen wordt door HAR's tijdvariërende σ}. Geen extra correctie nodig voor skewness.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\hypertarget{walk-forward-evaluatie}{%
+\section{Walk-forward evaluatie}\label{walk-forward-evaluatie}}
+
+\hypertarget{intuuxeftie-6}{%
+\subsection{Intuïtie}\label{intuuxeftie-6}}
+
+Je kunt niet OOS-evalueren met een vast model \,---\, markten veranderen. \textbf{Walk-forward} simuleert hoe je het model in productie zou gebruiken:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Train op data tot t
+\item
+  Voorspel voor t+1
+\item
+  Schuif window één dag op
+\item
+  Refit periodiek (om de 20 dagen)
+\end{enumerate}
+
+\begin{lstlisting}
+Train ████████████░░░░░░░░░░░░░░░░░░░░
+Test          ▲                       
+              t+1
+                
+Train ████████████████░░░░░░░░░░░░░░░░
+Test              ▲                   
+                  t+21
+\end{lstlisting}
+
+\hypertarget{wiskunde-expanding-vs-rolling}{%
+\subsection{Wiskunde \,---\, expanding vs rolling}\label{wiskunde-expanding-vs-rolling}}
+
+\textbf{Expanding window} (wij gebruiken dit):
+- Training-set groeit elke 20 dagen
+- Behoudt alle history (beter voor low-frequency data zoals dag)
+
+\textbf{Rolling window}:
+- Vast venster van bijvoorbeeld 500 dagen
+- Vergeet oude data (beter bij regime-changes)
+
+Voor BTC, sinds de markt fundamenteel veranderde post-2017 (institutionalization), is expanding-vanaf-2019 zinvol.
+
+\hypertarget{python-vereenvoudigd}{%
+\subsection{Python (vereenvoudigd)}\label{python-vereenvoudigd}}
+
+\begin{lstlisting}[language=Python]
+def walk_forward(y, X, refit_step=20, train_start='2019-04-03', test_start='2022-10-01'):
+    results = []
+    test_dates = X.loc[test_start:].index
+    
+    # Init model
+    train_mask = X.index < test_start
+    model = sm.OLS(y[train_mask], X[train_mask]).fit()
+    
+    for i, t in enumerate(test_dates):
+        # Refit elke 20 dagen
+        if i % refit_step == 0:
+            train_mask = X.index < t
+            model = sm.OLS(y[train_mask], X[train_mask]).fit()
+        # Voorspel
+        y_hat = model.predict(X.loc[[t]]).iloc[0]
+        results.append({'date': t, 'y_pred': y_hat, 'y_actual': y.loc[t]})
+    
+    return pd.DataFrame(results)
+\end{lstlisting}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\hypertarget{scoring-rules}{%
+\section{Scoring rules}\label{scoring-rules}}
+
+\hypertarget{intuuxeftie-7}{%
+\subsection{Intuïtie}\label{intuuxeftie-7}}
+
+Hoe meet je hoe goed een \textbf{distributional forecast} is? Niet alleen mean-prediction telt \,---\, calibratie van de hele density.
+
+Drie standaarden:
+
+\hypertarget{a.-rmse-mean-prediction-accuracy}{%
+\subsection{A. RMSE \,---\, mean prediction accuracy}\label{a.-rmse-mean-prediction-accuracy}}
+
+\[\text{RMSE} = \sqrt{\frac{1}{n}\sum (\hat\mu_t - y_t)^2}\]
+
+Snel, gemakkelijk te interpreteren. Maar negeert calibratie.
+
+\hypertarget{b.-qlike-proper-voor-variance}{%
+\subsection{B. QLIKE \,---\, proper voor variance}\label{b.-qlike-proper-voor-variance}}
+
+\[\text{QLIKE} = \log(\hat\sigma_t^2) + \frac{RV_t}{\hat\sigma_t^2}\]
+
+\textbf{Patton (2011)}: QLIKE is een \emph{proper scoring rule} voor variance \,---\, kan niet ``gegamed'' worden door over-/onder-schatting. Robuust tegen RV-measurement-error.
+
+\hypertarget{c.-crps-full-density-evaluation}{%
+\subsection{C. CRPS \,---\, full density evaluation}\label{c.-crps-full-density-evaluation}}
+
+\[\text{CRPS}(F, y) = \int_{-\infty}^{\infty} \left[F(z) - \mathbb{1}\{z \geq y\}\right]^2 dz\]
+
+Waarbij \(F\) = forecasted CDF, \(y\) = realisatie. \textbf{CRPS rewards both sharpness and calibration} \,---\, een proper scoring rule voor distributional forecasts.
+
+\textbf{Voor skewed-t density} (analytische vorm bestaat niet, dus MC):
+
+\begin{lstlisting}[language=Python]
+def crps_mc(y, samples):
+    """Monte Carlo CRPS gegeven samples uit forecast density."""
+    samples = np.sort(samples)
+    n = len(samples)
+    # CRPS = E|X - y| - 0.5 * E|X - X'|
+    term1 = np.mean(np.abs(samples - y))
+    term2 = 0.5 * np.mean(np.abs(samples[:, None] - samples[None, :]))
+    return term1 - term2
+\end{lstlisting}
+
+\hypertarget{onze-resultaten-n-1-312}{%
+\subsection{Onze resultaten (n = 1 312)}\label{onze-resultaten-n-1-312}}
+
+\begin{longtable}[]{@{}lllll@{}}
+\toprule
+Model & CRPS ↓ & QLIKE ↓ & RMSE ↓ & R²\_oos ↑ \\
+\midrule
+\endhead
+\textbf{HAR-RS-DOW} & \textbf{0.498} & \textbf{0.595} & \textbf{0.889} & \textbf{+0.44} \\
+HAR-RS-Q-WE-X & 0.582 & 0.725 & 0.948 & +0.25 \\
+HAR-RS-X & 0.585 & 0.742 & 0.952 & +0.23 \\
+HAR-RS-WE & 0.587 & 0.748 & 0.954 & +0.23 \\
+HAR-WE & 0.589 & 0.685 & 0.957 & +0.22 \\
+\bottomrule
+\end{longtable}
+
+HAR-RS-DOW wint op \textbf{alle vier} de metrics zonder uitzondering.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\hypertarget{diebold-mariano-test}{%
+\section{Diebold-Mariano test}\label{diebold-mariano-test}}
+
+\hypertarget{intuuxeftie-8}{%
+\subsection{Intuïtie}\label{intuuxeftie-8}}
+
+Verschillen in CRPS tussen twee modellen zijn empirisch \,---\, maar zijn ze \textbf{statistisch significant}? DM-test toetst of twee modellen even nauwkeurig zijn.
+
+\hypertarget{wiskunde-2}{%
+\subsection{Wiskunde}\label{wiskunde-2}}
+
+Voor twee modellen \(A, B\) met loss-series \(L_t^A, L_t^B\):
+
+\[d_t = L_t^A - L_t^B\]
+
+Onder \(H_0\) (gelijke nauwkeurigheid): \(E[d_t] = 0\).
+
+DM-statistic:
+\[DM = \frac{\bar d}{\sqrt{\widehat{\text{Var}}(\bar d)/n}} \xrightarrow{d} N(0, 1)\]
+
+Voor variance estimation gebruiken we \textbf{Newey-West HAC} (autocorrelatie in \(d_t\) corrigeren):
+
+\[\widehat{\text{Var}}(\bar d) = \frac{1}{n}\left[\hat\gamma_0 + 2\sum_{k=1}^{K} w_k \hat\gamma_k\right]\]
+
+Met Bartlett-kernel \(w_k = 1 - k/(K+1)\) en optimale lag \(K = \lfloor 4(n/100)^{2/9} \rfloor\) (voor n=1312: K=7).
+
+\hypertarget{python}{%
+\subsection{Python}\label{python}}
+
+\begin{lstlisting}[language=Python]
+def diebold_mariano(loss_a, loss_b, h=1):
+    """DM-test met Newey-West HAC."""
+    d = loss_a - loss_b
+    n = len(d)
+    mean_d = d.mean()
+    
+    # Newey-West variance
+    K = int(np.floor(4 * (n/100)**(2/9)))
+    var_d = ((d - mean_d)**2).mean()
+    for k in range(1, K+1):
+        cov_k = ((d[k:] - mean_d) * (d[:-k] - mean_d)).mean()
+        var_d += 2 * (1 - k/(K+1)) * cov_k
+    
+    dm_stat = mean_d / np.sqrt(var_d / n)
+    p_value = 2 * (1 - stats.norm.cdf(abs(dm_stat)))
+    return dm_stat, p_value
+\end{lstlisting}
+
+\hypertarget{onze-resultaten}{%
+\subsection{Onze resultaten}\label{onze-resultaten}}
+
+\begin{longtable}[]{@{}llll@{}}
+\toprule
+HAR-RS-DOW vs \ldots{} & DM-statistic & p-value & Significantie \\
+\midrule
+\endhead
+HAR-RS-Q-WE-X & -7.34 & \textless{} 0.001 & ★★★ \\
+HAR-RS-X & -7.51 & \textless{} 0.001 & ★★★ \\
+HAR-RS-WE & -7.42 & \textless{} 0.005 & ★★★ \\
+HAR-WE & -6.89 & \textless{} 0.005 & ★★★ \\
+\bottomrule
+\end{longtable}
+
+Alle p-waarden ver onder 0.05 \,---\, HAR-RS-DOW is statistisch significant beter.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\hypertarget{value-at-risk}{%
+\section{Value-at-Risk}\label{value-at-risk}}
+
+\hypertarget{intuuxeftie-9}{%
+\subsection{Intuïtie}\label{intuuxeftie-9}}
+
+VaR\_α = ``Wat is het verlies dat we met waarschijnlijkheid (1-α) niet zullen overschrijden?''
+
+Voor α=5\% en σ=2\% per dag (return-vol):
+- VaR\_5\% ≈ −σ · 1.645 = −3.29\% (Normal aanname)
+- Anders gezegd: 95\% van de dagen is verlies \textless{} 3.29\%
+
+\hypertarget{wiskunde-3}{%
+\subsection{Wiskunde}\label{wiskunde-3}}
+
+\[\text{VaR}_\alpha(r_{t+1} | \mathcal{F}_t) = F^{-1}_{r|\mathcal{F}_t}(\alpha)\]
+
+Voor verschillende density-aannames:
+
+\textbf{Normal}: \(\text{VaR}_\alpha = -\sigma_t \cdot z_\alpha\), met \(z_\alpha = \Phi^{-1}(\alpha)\)
+
+\textbf{Student-t(ν)}: \(\text{VaR}_\alpha = -\sigma_t \cdot t_{\alpha,\nu} / \sqrt{\nu/(\nu-2)}\) (gestandaardiseerd)
+
+\textbf{Hansen skewed-t(ν,λ)}: numerieke inversie van de skewed-t CDF
+
+\hypertarget{backtest-christoffersen}{%
+\subsection{Backtest: Christoffersen}\label{backtest-christoffersen}}
+
+Onder correct model: violations \(\mathbb{1}\{r_t < \text{VaR}_\alpha\}\) vormen i.i.d. Bernoulli(α).
+
+\textbf{Unconditional coverage test} (Kupiec 1995):
+\[LR_{uc} = -2\log\left[\frac{\alpha^x (1-\alpha)^{n-x}}{(\hat p)^x (1-\hat p)^{n-x}}\right] \sim \chi^2_1\]
+
+Met \(x\) = aantal violations, \(\hat p = x/n\).
+
+\textbf{Conditional coverage test} (Christoffersen 1998): test ook \textbf{independence} van violations (geen clusters).
+
+\hypertarget{onze-resultaten-log-rv-niveau}{%
+\subsection{Onze resultaten (log-RV niveau)}\label{onze-resultaten-log-rv-niveau}}
+
+\begin{longtable}[]{@{}lllll@{}}
+\toprule
+α & Target & Realized & Coverage ratio & Kupiec p \\
+\midrule
+\endhead
+1\% & 13 & 13 & 1.00 & 1.00 ✓ \\
+5\% & 65 & 67 & 1.03 & 0.81 ✓ \\
+95\% & 65 & 64 & 0.98 & 0.90 ✓ \\
+99\% & 13 & 12 & 0.92 & 0.78 ✓ \\
+\bottomrule
+\end{longtable}
+
+Perfecte calibratie op log-RV niveau.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\hypertarget{expected-shortfall}{%
+\section{Expected Shortfall}\label{expected-shortfall}}
+
+\hypertarget{intuuxeftie-10}{%
+\subsection{Intuïtie}\label{intuuxeftie-10}}
+
+VaR vertelt je \emph{waar} de staart begint. ES vertelt je \emph{hoe erg} de staart wordt.
+
+\[\text{ES}_\alpha = E[r_t | r_t \leq \text{VaR}_\alpha]\]
+
+ES is \textbf{coherent risk measure} (Artzner et al.~1999) \,---\, VaR is dat niet (geen subadditiviteit).
+
+\textbf{Basel III FRTB (2016)} vervangt VaR door ES als regulatory standard precies om deze reden.
+
+\hypertarget{wiskunde-closed-form-voor-student-t}{%
+\subsection{Wiskunde \,---\, closed-form voor Student-t}\label{wiskunde-closed-form-voor-student-t}}
+
+Voor standardized Student-t(ν):
+
+\[\text{ES}_\alpha = -\frac{\nu + t_\alpha^2}{\nu - 1} \cdot \frac{f_\nu(t_\alpha)}{\alpha} \cdot \frac{1}{\sqrt{\nu/(\nu-2)}}\]
+
+Waarbij \(t_\alpha = F^{-1}_\nu(\alpha)\) en \(f_\nu\) de standard-t pdf.
+
+Voor BTC-σ = 3\%, ν=3, α=5\%:
+\[\text{ES}_{5\%} = -0.03 \cdot 2.237 = -6.71\%\]
+
+\hypertarget{acerbi-szekely-2014-z1-test}{%
+\subsection{Acerbi-Szekely (2014) Z1-test}\label{acerbi-szekely-2014-z1-test}}
+
+Hoe test je of ES-forecasts adequaat zijn? Christoffersen werkt niet voor ES (geen indicator-functie). Acerbi-Szekely Z1:
+
+\[Z_1 = \frac{1}{N_\alpha} \sum_{t: \text{violation}_t} \frac{r_t}{\text{ES}_\alpha(t)} + 1\]
+
+Onder \(H_0\) (model correct): \(E[Z_1] = 0\).
+
+\textbf{Interpretatie}:
+- \(Z_1 > 0\) → conservatief (realized losses minder erg dan voorspeld)
+- \(Z_1 = 0\) → perfect kalibreerd
+- \(Z_1 < 0\) → underforecast (gevaarlijk voor risk capital)
+
+\hypertarget{onze-resultaten-1}{%
+\subsection{Onze resultaten}\label{onze-resultaten-1}}
+
+\begin{longtable}[]{@{}llllll@{}}
+\toprule
+Density & α & Forecast ES & Realized ES & Z1 & Verdict \\
+\midrule
+\endhead
+Normal & 1\% & -5.93\% & -5.84\% & +2.11 & ✓ Conservatief \\
+Normal & 5\% & -4.59\% & -3.91\% & +1.90 & ✓ Conservatief \\
+Student-t(3) & 1\% & -8.99\% & -5.84\% & +1.73 & ✓ Conservatief \\
+Student-t(3) & 5\% & -4.97\% & -3.91\% & +1.83 & ✓ Conservatief \\
+Hansen skewed-t (ν=4.4) & 1\% & -7.86\% & -5.84\% & +1.83 & ✓ Conservatief \\
+Hansen skewed-t (ν=4.4) & 5\% & -5.06\% & -3.91\% & +1.81 & ✓ Conservatief \\
+\bottomrule
+\end{longtable}
+
+\textbf{ALLE drie density-aannames geven positieve Z1} → conclusie is robuust. HAR-driven ES is adequate voor Basel III kapitaal-reservering.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\hypertarget{black-scholes-met-har-ux3c3}{%
+\section{Black-Scholes met HAR-σ}\label{black-scholes-met-har-ux3c3}}
+
+\hypertarget{intuuxeftie-11}{%
+\subsection{Intuïtie}\label{intuuxeftie-11}}
+
+Black-Scholes (1973): de prijs van een Europese call is een functie van vijf inputs:
+
+\[C(S, K, r, T, \sigma) = S \Phi(d_1) - K e^{-rT} \Phi(d_2)\]
+
+Vier van deze (spot \(S\), strike \(K\), rate \(r\), time-to-maturity \(T\)) zijn observeerbaar. \textbf{σ is de enige onbekende} \,---\, en daarmee de meest waardevolle input.
+
+\hypertarget{wiskunde-4}{%
+\subsection{Wiskunde}\label{wiskunde-4}}
+
+\[d_1 = \frac{\ln(S/K) + (r + \frac{1}{2}\sigma^2)T}{\sigma \sqrt{T}}, \quad d_2 = d_1 - \sigma\sqrt{T}\]
+
+Put-call parity:
+\[P = C - S + K e^{-rT}\]
+
+ATM straddle (K = S, r = 0):
+\[\text{Straddle} = C + P = 2 \cdot S \cdot \Phi(d_1) - S - S + S = 2S[\Phi(d_1) - 0.5]\]
+
+Voor d\_1 ≈ 0.5σ√T (ATM, r=0), is straddle ≈ 0.8 · S · σ · √T.
+
+\hypertarget{python-implementatie-2}{%
+\subsection{Python implementatie}\label{python-implementatie-2}}
+
+\begin{lstlisting}[language=Python]
+from scipy.stats import norm
+
+def bs_call(S, K, sigma, T, r=0):
+    d1 = (np.log(S/K) + (r + 0.5*sigma**2)*T) / (sigma*np.sqrt(T))
+    d2 = d1 - sigma*np.sqrt(T)
+    return S*norm.cdf(d1) - K*np.exp(-r*T)*norm.cdf(d2)
+
+def bs_straddle_atm(S, sigma_daily, T_days):
+    sigma_ann = sigma_daily * np.sqrt(365)
+    T = T_days / 365
+    call = bs_call(S, S, sigma_ann, T)
+    put = call  # ATM, r=0
+    return call + put
+\end{lstlisting}
+
+\hypertarget{toepassing-har-ux3c3-als-input}{%
+\subsection{Toepassing: HAR-σ als input}\label{toepassing-har-ux3c3-als-input}}
+
+Voor elke dag t in OOS:
+1. Compute HAR-forecast: \(\hat\sigma_{t+1}\)
+2. ``Verkoop'' een 7-day ATM straddle voor premium = BS(σ\_HAR)
+3. Wacht 7 dagen
+4. Payoff = \(|S_{t+7} - S_t|\)
+5. P\&L = Premium − Payoff
+
+\hypertarget{onze-resultaten-2}{%
+\subsection{Onze resultaten}\label{onze-resultaten-2}}
+
+\begin{longtable}[]{@{}lllll@{}}
+\toprule
+σ-model & Avg premium & Avg payoff & Edge & Hit\% \\
+\midrule
+\endhead
+Constant σ & €11.16 & €10.30 & +€0.86 & 66.4\% \\
+Rolling 30d σ & €10.59 & €10.30 & +€0.29 & 63.0\% \\
+\textbf{HAR-RS-DOW σ} & €10.50 & €10.30 & \textbf{+€0.20} & 60.0\% \\
+\bottomrule
+\end{longtable}
+
+HAR-σ levert prijzen \textbf{dichtst bij fair value} \,---\, minst systematisch mispricing.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\hypertarget{vol-managed-strategies}{%
+\section{Vol-managed strategies}\label{vol-managed-strategies}}
+
+\hypertarget{intuuxeftie-12}{%
+\subsection{Intuïtie}\label{intuuxeftie-12}}
+
+Moreira-Muir (2017) toonden dat \textbf{dynamische positie-sizing op basis van vol} Sharpe-ratio's verhoogt:
+- Bij hoge \(\sigma_t\): kleinere positie
+- Bij lage \(\sigma_t\): grotere positie
+- Net effect: meer constante portfolio-vol → betere risk-adjusted return
+
+\hypertarget{wiskunde-5}{%
+\subsection{Wiskunde}\label{wiskunde-5}}
+
+Vol-target strategie:
+\[w_t = \min\left(w_{\max}, \frac{\sigma_{\text{target}}}{\hat\sigma_t}\right)\]
+
+Bijvoorbeeld \(\sigma_{\text{target}} = 35\%\) jaarlijks en \(\hat\sigma_t\) uit HAR.
+
+\textbf{Portfolio return}: \(r_t^{\text{port}} = w_{t-1} \cdot r_t^{\text{asset}}\)
+
+\hypertarget{onze-empirische-resultaten}{%
+\subsection{Onze empirische resultaten}\label{onze-empirische-resultaten}}
+
+\begin{longtable}[]{@{}llll@{}}
+\toprule
+Strategie & Sharpe & MDD & Verdict \\
+\midrule
+\endhead
+Pure HAR vol-target (daily) & 0.36 & -22\% & Fees consumeren edge \\
+HAR vol-target + Trend MA50 & \textbf{0.94} & \textbf{-26\%} & ✓ ROBUST \\
+ATR-stop + Trend MA50 & 1.14 & -28\% & Winner (simpel beats HAR) \\
+Buy-and-hold & 0.52 & -55\% & FRAGILE in late period \\
+\bottomrule
+\end{longtable}
+
+\textbf{Belangrijkste vondst}: HAR voegt waarde toe als \textbf{position-sizing within a trend overlay}, niet als pure directional signal. Dit is consistent met theorie: HAR voorspelt magnitude, niet richting.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\hypertarget{samenvatting-voor-je-defense}{%
+\section{Samenvatting voor je defense}\label{samenvatting-voor-je-defense}}
+
+\hypertarget{de-drie-kern-bewijzen-voor-je-commissie}{%
+\subsection{De drie kern-bewijzen voor je commissie}\label{de-drie-kern-bewijzen-voor-je-commissie}}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  \textbf{Statistisch}: HAR-RS-DOW wint op CRPS, QLIKE, R², DM \,---\, vier onafhankelijke metrics, alle p \textless{} 0.005
+\item
+  \textbf{Risk-management}: ES-coverage Z1 = +1.7-2.1 (conservatief) onder Normal, Student-t(3), én Hansen skewed-t. Robuust voor Basel III.
+\item
+  \textbf{Trading}: HAR's economische waarde is configuratie-afhankelijk. Vol-targeting + trend = ROBUST. Pure vol-managed wordt verslagen door eenvoudige ATR-stop.
+\end{enumerate}
+
+\hypertarget{verwachte-vragen-antwoorden}{%
+\subsection{Verwachte vragen + antwoorden}\label{verwachte-vragen-antwoorden}}
+
+\textbf{Q}: ``HAR-RS-DOW heb je zelf bedacht?''
+\textbf{A}: HAR (Corsi 2009) en HAR-RS (Patton-Sheppard 2015) zijn established. DOW-dummies zijn standaard econometrie. Onze bijdrage is de \textbf{specifieke combinatie voor BTC-EUR}, plus de empirische demonstratie van dominantie.
+
+\textbf{Q}: ``Waarom Realized Kernel en niet GARCH?''
+\textbf{A}: RK gebruikt \textbf{intraday data} (5-min) → veel meer signaal dan GARCH op alleen daily closes. Plus correctie voor microstructure noise.
+
+\textbf{Q}: ``Waarom log-RV en niet RV zelf?''
+\textbf{A}: (1) RV is rechts-scheef, log ≈ Gaussian; (2) lineair model op log = multiplicatief op originele schaal, past bij vol-procesgedrag.
+
+\textbf{Q}: ``Hoe weet je dat HAR niet overfit?''
+\textbf{A}: Walk-forward met 20-day refit. Training tot 2022-10, testing 2022-10 → 2026-05 (1 312 dagen onafhankelijk). DM-test p-values bevestigen niet-spuriousness.
+
+\textbf{Q}: ``Waarom Z1 \textgreater{} 0? Is dat goed of slecht?''
+\textbf{A}: Voor risk-management is conservatief beter. Het betekent een bank die HAR-ES gebruikt zou \emph{meer} kapitaal reserveren dan strikt nodig \,---\, preferred over te weinig. Vergelijk: een te-strenge regel in regulatory finance is veiliger dan een te-soepele.
+
+\textbf{Q}: ``Waarom geen options-trading uitgevoerd?''
+\textbf{A}: Bitvavo heeft geen options markt. Voor live options-trading is Deribit nodig, minimum contract size 0.1 BTC ≈ €7000 \,---\, buiten huidige account-schaal. Onze H6-simulatie toont theoretische waarde.
+
+\textbf{Q}: ``Waarom MA50 + ATR-stop wint van HAR?''
+\textbf{A}: Trend-direction is wat directional trading vraagt; HAR voorspelt magnitude. ATR-stop gebruikt ook vol (via ATR(14)) maar in lokaler, eenvoudiger vorm. HAR's lange-memory geheugen voegt geen waarde toe bovenop ATR's korte-memory voor stop-placement.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\hypertarget{belangrijkste-literatuur-citeer-deze-in-je-defense}{%
+\section{Belangrijkste literatuur \,---\, citeer deze in je defense}\label{belangrijkste-literatuur-citeer-deze-in-je-defense}}
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{Corsi, F. (2009)} \,---\, JFE 7(2). Originele HAR-paper.
+\item
+  \textbf{Patton, A. J., \& Sheppard, K. (2015)} \,---\, REStat 97(3). HAR-RS semivariance.
+\item
+  \textbf{Hansen, B. E. (1994)} \,---\, IER 35(3). Skewed-t density.
+\item
+  \textbf{Acerbi, C., \& Szekely, B. (2014)} \,---\, Risk 27(11). ES-backtest Z1.
+\item
+  \textbf{Diebold, F. X., \& Mariano, R. S. (1995)} \,---\, JBES 13(3). DM-test.
+\item
+  \textbf{Barndorff-Nielsen, O. E., et al.~(2008)} \,---\, Econometrica 76(6). Realized Kernel.
+\item
+  \textbf{Moreira, A., \& Muir, T. (2017)} \,---\, JoF 72(4). Vol-managed portfolios.
+\item
+  \textbf{Basel Committee (2019)} \,---\, Minimum capital requirements for market risk (FRTB).
+\item
+  \textbf{Christoffersen, P. F. (1998)} \,---\, IER 39(4). VaR backtesting.
+\end{itemize}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+Klaar. Lees dit document één keer rustig door, dan ben je defendable op elk component.
+
+
+\end{document}

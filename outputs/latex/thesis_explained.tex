@@ -1,0 +1,111 @@
+% =====================================================================
+% Thesis Explained Econometrically — Sake Saakstra (MSc EOR Financial Track)
+% Vrije Universiteit Amsterdam, 2025-2026
+% 
+% This document is a pedagogical walkthrough of the HAR-RS-DOW thesis project.
+% Compile on Overleaf with: pdfLaTeX (default) — no special compiler needed.
+% =====================================================================
+
+\documentclass[11pt,a4paper]{article}
+
+% ----- Encoding & language ---------------------------------------------------
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[dutch]{babel}
+\usepackage{lmodern}
+\usepackage{microtype}
+
+% ----- Layout ---------------------------------------------------------------
+\usepackage[a4paper, margin=2.5cm]{geometry}
+\usepackage{parskip}             % paragraph spacing instead of indent
+\usepackage{setspace}
+\onehalfspacing
+
+% ----- Math -----------------------------------------------------------------
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{mathtools}
+\usepackage{bm}
+
+% ----- Tables ---------------------------------------------------------------
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{longtable}
+
+% ----- Code listings --------------------------------------------------------
+\usepackage{listings}
+\usepackage{xcolor}
+
+\definecolor{codebg}{HTML}{F5F5F5}
+\definecolor{codekey}{HTML}{0066CC}
+\definecolor{codestr}{HTML}{A31515}
+\definecolor{codecom}{HTML}{008000}
+
+\lstset{
+    backgroundcolor=\color{codebg},
+    basicstyle=\ttfamily\footnotesize,
+    keywordstyle=\color{codekey}\bfseries,
+    stringstyle=\color{codestr},
+    commentstyle=\color{codecom}\itshape,
+    showstringspaces=false,
+    breaklines=true,
+    breakatwhitespace=true,
+    columns=fullflexible,
+    frame=single,
+    framesep=4pt,
+    rulecolor=\color{gray!30},
+    xleftmargin=10pt,
+    xrightmargin=10pt,
+    aboveskip=10pt,
+    belowskip=10pt,
+    language=Python,
+    morekeywords={pd, np, plt, sm, stats, optimize, gfn}
+}
+
+% ----- Hyperlinks & metadata ------------------------------------------------
+\usepackage[hidelinks]{hyperref}
+\hypersetup{
+    pdftitle={Thesis econometrisch uitgelegd},
+    pdfauthor={Sake Saakstra},
+    pdfsubject={HAR-RS-DOW variance forecasting for BTC-EUR},
+    pdfencoding=auto,
+    colorlinks=true,
+    linkcolor=blue!70!black,
+    urlcolor=blue!70!black,
+    citecolor=blue!70!black
+}
+
+
+% ----- Title block ----------------------------------------------------------
+\title{
+    \vspace{-1cm}
+    \Large\textbf{Thesis econometrisch uitgelegd}\\[0.3em]
+    \large Een leerdocument voor defense-voorbereiding\\[0.5em]
+    \normalsize\textit{HAR-RS-DOW variance forecasting voor BTC-EUR}
+}
+\author{
+    Sake Saakstra\\
+    \small MSc Econometrics \& Operations Research --- Financial Track\\
+    \small Vrije Universiteit Amsterdam
+}
+\date{2025--2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent Dit document is een pedagogische walkthrough van het HAR-RS-DOW thesis-project: van de econometrische intuïtie achter heterogeneous autoregressive volatility-modellen, via de wiskundige formulering, naar concrete Python-implementaties en hun financiële toepassingen in risk-management en option-pricing. Veertien zelfstandig leesbare hoofdstukken dekken alle onderdelen die in een defense-discussie aan bod kunnen komen.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+% =====================================================================
+% INHOUD — gegenereerd uit thesis_explained_econometrically.md
+% =====================================================================
+
+\input{thesis_body}
+
+\end{document}
