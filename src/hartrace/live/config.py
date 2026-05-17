@@ -22,7 +22,7 @@ class TradingConfig:
     dry_run: bool           # if True: log decisions, don't place orders
     
     # Strategy selection
-    strategy: str = 'atr_trend'  # 'atr_trend' (H3 winner), 'pure_trend' (G5), 'vol_managed' (HAR)
+    strategy: str = 'pure_trend'  # H8 winner — empirisch beste over alle metrics , 'pure_trend' (G5), 'vol_managed' (HAR)
     
     # Strategy parameters - shared
     market: str = 'BTC-EUR'
@@ -126,7 +126,7 @@ def load_config(
         )
     
     # Strategy selection
-    strategy = env.get('STRATEGY', 'atr_trend').lower()
+    strategy = env.get('STRATEGY', 'pure_trend').lower()
     if strategy not in ('atr_trend', 'pure_trend', 'vol_managed'):
         raise ValueError(
             f"Invalid STRATEGY={strategy}. Use 'atr_trend', 'pure_trend' of 'vol_managed'."

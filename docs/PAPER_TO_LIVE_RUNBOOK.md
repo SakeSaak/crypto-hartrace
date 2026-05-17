@@ -288,3 +288,16 @@ Geen tooling daarvoor in deze bot. Doe het in Bitvavo Pro Mode UI direct (Orders
 | State | `cat state/trader_state.json` |
 | Disable schedule | `launchctl unload ~/Library/LaunchAgents/com.sakesaakstra.btc-trader.plist` |
 | Re-enable schedule | `launchctl load ~/Library/LaunchAgents/com.sakesaakstra.btc-trader.plist` |
+
+---
+
+## Strategie-switch geschiedenis
+
+### 2026-05-17: pure_trend wordt nieuwe default
+Zie `CHANGELOG.md` voor empirische rationale (H8 analyse).
+Voor het wisselen van strategy zonder code-edit kun je `STRATEGY=...` zetten in `~/W8W.env`:
+```
+STRATEGY=pure_trend     # huidige default
+STRATEGY=atr_trend      # vorige default (rollback)
+STRATEGY=vol_managed    # HAR-σ vol-targeting (zelden zinvol)
+```
