@@ -139,7 +139,7 @@ If you use ideas, code, or results from this repository in academic work:
              using {HAR-RS-DOW} Models},
   school  = {Vrije Universiteit Amsterdam},
   year    = {2026},
-  type    = {{MSc} thesis},
+  type    = {Paper},
   note    = {{MSc} Econometrics \& Operations Research, Financial Track}
 }
 ```
