@@ -1,142 +1,86 @@
-# HAR-RS-DOW: Variance Forecasting for BTC-EUR
+# HAR-RS-DOW Variance Forecasting for Bitcoin
 
-> **MSc Econometrics & Operations Research thesis** — Financial Track, Vrije Universiteit Amsterdam (2025-2026)
-> An econometric study establishing HAR-RS-DOW as the statistically dominant variance-forecaster for BTC-EUR daily realized variance, with canonical applications to risk management (VaR / Expected Shortfall) and option pricing (Black-Scholes).
+> **MSc Econometrics & Operations Research thesis project** — Financial Track, Vrije Universiteit Amsterdam (2025-2026)
 
-[![Tests](https://img.shields.io/badge/tests-20%20passing-brightgreen)]() [![Python](https://img.shields.io/badge/python-3.10+-blue)]() [![License](https://img.shields.io/badge/license-MIT-green)]()
+This repository contains two distinct artifacts that share a codebase but have different status:
 
----
+1. **The paper** ([`paper/paper.md`](paper/paper.md), [`paper/paper.pdf`](paper/paper.pdf)) — the academic contribution: HAR-RS-DOW as the statistically dominant variance forecaster for BTC-EUR, with canonical applications to risk management and option pricing.
+2. **The trading bot** ([`bot/`](bot/) directory) — a personal engineering implementation that runs daily on Bitvavo with €110 of capital. **The bot is not part of the paper's contribution.**
 
-## Paper contribution — three claims
-
-The paper establishes three connected empirical claims about HAR-RS-DOW for BTC-EUR:
-
-### Claim 1 — Statistical dominance (in-sample and out-of-sample)
-
-HAR-RS-DOW is the empirically best variance-forecaster for BTC-EUR daily realized variance, dominating nine HAR-family alternatives on every metric tested:
-
-| Metric | HAR-RS-DOW | Best alternative | Margin |
-|---|---|---|---|
-| In-sample BIC | -10 462 | -9 972 | ΔBIC = 490 (Bayes factor ~10¹⁰⁶) |
-| OOS CRPS (1 312 days) | **0.498** | 0.582 | -14% (HAR-RS-Q-WE-X) |
-| OOS R² (log-RV) | **+0.439** | +0.246 | +76% relative |
-| Diebold-Mariano vs four alternatives | dominant | — | p < 0.005 across all |
-| Multi-horizon h = 5 dominance | DM = **-5.46** | — | p < 10⁻⁷ |
-
-The semivariance decomposition (β_d⁻ = 0.34 vs β_d⁺ = 0.18) confirms the leverage effect at the variance level for crypto, and the day-of-week dummies capture systematic weekly seasonality (γ_saturday = -0.281, γ_monday = +0.142).
-
-### Claim 2 — Adequacy for Basel III risk forecasting
-
-HAR-driven density forecasts produce **conservatively calibrated** Value-at-Risk and Expected Shortfall across three density specifications. The Acerbi-Szekely (2014) Z1 statistic is positive for all three:
-
-| Density assumption | ES α=1% forecast | ES α=5% forecast | Z1 statistic | Verdict |
-|---|---|---|---|---|
-| Normal | -5.93% | -4.59% | +2.11 / +1.90 | Conservative — capital-adequate |
-| Student-t (ν=3) | -8.99% | -4.97% | +1.73 / +1.83 | Conservative |
-| Hansen skewed-t (ν=4.4, λ=+0.01) | -7.86% | -5.06% | +1.83 / +1.81 | Conservative |
-| Realized ES (1 312 OOS days) | -5.84% | -3.91% | — | — |
-
-Z1 > 0 implies the model **over-reserves** capital — a desirable property for regulatory adequacy under FRTB.
-
-### Claim 3 — Edge in option pricing
-
-Using HAR-σ̂ as input to Black-Scholes for 7-day at-the-money straddles produces fair-value pricing closer to market-clearing than naive vol-input alternatives:
-
-| σ-model | Avg premium | Avg payoff | Edge | Hit rate |
-|---|---|---|---|---|
-| Constant σ (sample mean) | €11.16 | €10.30 | +€0.86 | 66.4% over-priced |
-| Rolling 30-day σ | €10.59 | €10.30 | +€0.29 | 63.0% |
-| **HAR-RS-DOW σ̂** | **€10.50** | €10.30 | **+€0.20** | **60.0%** |
-
-The HAR-driven price is closest to fair value — operationally relevant for any market-maker quoting BTC options on platforms like Deribit, where consistent fair-value quotes capture flow without leaving systematic edge to counterparties.
+Readers interested in the academic work should go to [`paper/paper.md`](paper/paper.md). Readers interested in the engineering implementation can consult [`bot/README.md`](bot/README.md).
 
 ---
 
-## Why this matters
+## The paper at a glance
 
-HAR-RS-DOW is, by construction, a **variance forecasting model** — it predicts the *magnitude* of future return variation conditional on heterogeneous-horizon information in past realized variance, semivariance decomposition, and day-of-week effects. The paper evaluates whether this statistical edge translates into the applications where variance forecasts are the right input:
+**Title:** HAR-RS-DOW Variance Forecasting for Bitcoin: Statistical Dominance and Applications in Risk Management and Option Pricing
 
-- **VaR + Expected Shortfall** under Basel III FRTB: yes, conservatively calibrated
-- **Black-Scholes option pricing**: yes, minimum-edge fair-value pricing
-- **Density forecasting** for risk-budgeting and stress-testing: yes, PIT-calibrated
+The paper makes three connected empirical contributions for BTC-EUR daily realized variance over the period 3 April 2019 to 14 May 2026:
 
-The paper explicitly does **not** position HAR-RS-DOW as a directional trading signal — that would conflate two distinct econometric problems (variance vs. expected return).
+| # | Contribution | Key statistic |
+|---|---|---|
+| 1 | HAR-RS-DOW is the statistically dominant variance forecaster within the HAR family | In-sample ΔBIC = 490 over runner-up (Bayes factor ≈ 10¹⁰⁶); OOS CRPS = 0.498 vs 0.582 (best alt); DM-stat rejects equal predictive accuracy at p < 0.005 against all four nearest competitors |
+| 2 | HAR-driven density forecasts are conservatively calibrated for Basel III risk-management | Acerbi-Szekely Z1 ∈ [+1.73, +2.11] across three density specifications (Normal, t(3), Hansen skewed-t) and both significance levels (α ∈ {1%, 5%}) |
+| 3 | HAR-σ̂ as input to Black-Scholes yields fair-value option pricing | Avg edge €0.20 for 7-day ATM straddle (n=1 305 OOS valuations), against €0.86 for constant-σ and €0.29 for rolling-σ baselines |
 
----
+**Sample:** 2 334 days estimation panel (3 April 2019 – 14 May 2026), with 1 312-day out-of-sample window from 1 October 2022 onwards. Walk-forward re-estimation every 20 days.
 
-## Paper structure
-
-The full thesis report is in [`outputs/thesis_progress_report.pdf`](outputs/thesis_progress_report.pdf), structured in three parts:
-
-- **Deel I** — HAR-RS-DOW as variance forecaster (statistical contribution)
-- **Deel II** — Risk management applications (VaR, Expected Shortfall, density-based)
-- **Deel III** — Discussion, methodological role, limitations
-
-A pedagogical walkthrough is available in [`outputs/thesis_explained_econometrically.md`](outputs/thesis_explained_econometrically.md) and as Overleaf-ready LaTeX in [`outputs/latex/`](outputs/latex/).
+**Methodology:** Realized Kernel at 5-minute frequency (Barndorff-Nielsen et al. 2008); ten HAR-family specifications estimated by OLS with Newey-West HAC standard errors; conditional density via Hansen (1994) skewed-t for risk applications; CRPS and Diebold-Mariano (1995) testing for forecast comparison; Acerbi-Szekely (2014) Z1 for Expected Shortfall backtesting.
 
 ---
 
-## Data and replication
-
-OOS evaluation window: 2022-10-01 → 2026-05-14 (1 312 days). Estimation sample begins 2019-04-03 (Bitvavo BTC-EUR market inception plus 26-day warmup for realized measures).
-
-```bash
-pip install -r requirements.txt
-pytest tests/test_reproducibility.py -v    # 20 passing tests, ~2s
-```
-
-Test coverage spans data integrity, model performance (CRPS=0.498, QLIKE=0.595, R²=+0.44), DM-dominance over alternatives, ES Z1 conservatism, Hansen skewed-t calibration, mathematical correctness (Black-Scholes put-call parity, Normal ES, t(3) ES heavy-tail behavior).
-
-Raw OHLC data (~186 MB) is excluded from the repo and fetched via the Bitvavo public REST API:
-
-```bash
-python scripts/A1_fetch_bitvavo_candles.py
-python scripts/B2_recompute_realized_v2.py
-```
-
-Period covered: 2019-03-08 → 2026-05-15 at five frequencies (1m, 5m, 15m, 1h, 1d), plus ETH-EUR for cross-asset robustness checks.
-
----
-
-## Repository layout
+## Repository structure
 
 ```
 crypto_hartrace/
-├── src/hartrace/           # Econometric library
-│   ├── distributions.py    # Hansen 1994 skewed-t implementation
-│   ├── estimation.py       # HAR-family MLE
-│   ├── features_v2.py      # Daily realized variance features
-│   └── external_data.py    # FRED + yfinance integration
-├── scripts/                # Empirical pipeline
-│   ├── B1, C1              # Signature plot + stylized facts
-│   ├── D1                  # Horse race (10 HAR variants)
-│   ├── E1, E2, E4b         # Walk-forward, VaR coverage, multi-horizon
-│   ├── H4                  # Expected Shortfall (Acerbi-Szekely Z1)
-│   ├── H5                  # Density specification robustness
-│   └── H6                  # Option pricing simulation
-├── tests/                  # Reproducibility test suite (20 tests)
-├── outputs/
-│   ├── thesis_progress_report.{md,pdf}
-│   ├── thesis_explained_econometrically.md   # Pedagogical walkthrough
-│   ├── latex/              # Overleaf-ready LaTeX
-│   ├── tables/             # CSV / parquet result files
-│   ├── figures/            # PNG plots
-│   └── presentation/       # 22-slide defense deck
-└── docs/                   # Auxiliary documentation
+├── paper/                     # Academic work — START HERE
+│   ├── paper.md               # Full paper (Markdown source)
+│   ├── paper.pdf              # Compiled PDF (working paper format)
+│   └── _archive_pre_academic.md   # Pre-restructure draft, for diff
+│
+├── bot/                       # Trading bot — engineering, not paper
+│   └── README.md              # Bot documentation (separate from paper)
+│
+├── src/hartrace/              # Econometric library (used by both paper & bot)
+│   ├── distributions.py       # Hansen 1994 skewed-t implementation
+│   ├── estimation.py          # HAR-family MLE
+│   ├── features_v2.py         # Daily realized variance features
+│   ├── external_data.py       # FRED + yfinance integration
+│   └── live/                  # Live-bot subpackage (see bot/README.md)
+│
+├── scripts/
+│   ├── B1, C1, D1             # Stylized facts + horse race (paper)
+│   ├── E1, E2, E4b            # OOS walk-forward, VaR coverage, multi-horizon (paper)
+│   ├── H4, H5, H6             # Expected Shortfall, density-robustness, option pricing (paper)
+│   ├── H7 – H11               # Trading R&D — see bot/README.md
+│   └── btc_live_trader.py     # Live bot entry point (see bot/README.md)
+│
+├── tests/                     # Reproducibility suite (20 passing tests, ~2s)
+├── docs/
+├── outputs/                   # Tables, figures, presentation, LaTeX explainer
+└── data/                      # Excluded from git (~186 MB); fetched via Bitvavo REST API
 ```
 
 ---
 
-## Engineering note: live trading implementation
+## Reproducing the paper
 
-In addition to the paper analyses, this repository contains an engineering implementation of an automated trading bot deployed on Bitvavo. **This is not part of the paper's central claim** — HAR-RS-DOW is not positioned as a directional trading signal. The trading code serves two secondary purposes:
+```bash
+pip install -r requirements.txt
+pytest tests/test_reproducibility.py -v        # 20 tests, ~2s
 
-1. **Production validation** of the data pipeline and HAR estimation routines — proves the model can run end-to-end in real-time
-2. **Empirical scope check** — investigates under what conditions vol-information adds economic value (answer: position-sizing within trend overlay, modest improvement)
+# Re-run the empirical pipeline (data → realized measures → estimation → applications)
+python scripts/A1_fetch_bitvavo_candles.py     # Pull OHLC data (~186 MB)
+python scripts/B2_recompute_realized_v2.py     # Compute daily RK at 5-min frequency
+python scripts/D1_horse_race.py                # In-sample model comparison (Table 1)
+python scripts/E1_walkforward.py               # OOS walk-forward (Table 2)
+python scripts/E4b_multihorizon.py             # Multi-horizon (Table 3)
+python scripts/H4_expected_shortfall.py        # ES with Z1 backtest (Table 4)
+python scripts/H5_density_robustness.py        # Density-spec robustness
+python scripts/H6_option_pricing.py            # Black-Scholes valuation (Table 5)
+```
 
-The trading bot strategy converged empirically on simple trend-following (MA50 daily) with skip-weekend execution timing. The skip-weekend filter is itself derived from HAR-RS-DOW's DOW seasonality (γ_saturday = -0.281, indicating systematically lower weekend volatility and consequently wider bid-ask spreads). All code is in `src/hartrace/live/` with documentation in `docs/PAPER_TO_LIVE_RUNBOOK.md`.
-
-The implementation is not a recommendation. Trading cryptocurrency carries substantial risk; the live bot operates with €110 of personal capital purely as an engineering experiment.
+All script outputs land in `outputs/tables/` (CSV/parquet) and `outputs/figures/` (PNG).
 
 ---
 
@@ -145,8 +89,8 @@ The implementation is not a recommendation. Trading cryptocurrency carries subst
 ```bibtex
 @mastersthesis{saakstra2026harvar,
   author  = {Saakstra, Sake},
-  title   = {Variance Forecasting and Risk Management for {BTC-EUR}
-             using {HAR-RS-DOW} Models},
+  title   = {{HAR-RS-DOW} Variance Forecasting for {Bitcoin}: Statistical
+             Dominance and Applications in Risk Management and Option Pricing},
   school  = {Vrije Universiteit Amsterdam},
   year    = {2026},
   type    = {{MSc} thesis},
@@ -158,21 +102,21 @@ The implementation is not a recommendation. Trading cryptocurrency carries subst
 
 ## Theoretical foundations
 
-- **Corsi, F. (2009)**. *A simple approximate long-memory model of realized volatility*. Journal of Financial Econometrics, 7(2), 174–196.
-- **Patton, A. J., & Sheppard, K. (2015)**. *Good volatility, bad volatility: Signed jumps and the persistence of volatility*. Review of Economics and Statistics, 97(3), 683–697.
-- **Hansen, B. E. (1994)**. *Autoregressive conditional density estimation*. International Economic Review, 35(3), 705–730.
-- **Acerbi, C., & Szekely, B. (2014)**. *Back-testing expected shortfall*. Risk, 27(11), 76–81.
-- **Diebold, F. X., & Mariano, R. S. (1995)**. *Comparing predictive accuracy*. Journal of Business & Economic Statistics, 13(3), 253–263.
-- **Barndorff-Nielsen, O. E., Hansen, P. R., Lunde, A., & Shephard, N. (2008)**. *Designing realised kernels to measure the ex-post variation of equity prices*. Econometrica, 76(6), 1481–1536.
-- **Basel Committee on Banking Supervision (2019)**. *Minimum capital requirements for market risk*. Bank for International Settlements.
+Full reference list in [`paper/paper.md`](paper/paper.md) §References. The paper builds on:
 
-Full reference list in [`outputs/thesis_progress_report.md`](outputs/thesis_progress_report.md).
+- **Corsi (2009)** — original HAR specification
+- **Patton & Sheppard (2015)** — realized semivariance decomposition
+- **Bollerslev, Patton & Quaedvlieg (2016)** — quarticity-adjusted HAR
+- **Hansen (1994)** — autoregressive conditional density (skewed-t)
+- **Acerbi & Szekely (2014)** — Expected Shortfall backtest (Z1 statistic)
+- **Barndorff-Nielsen et al. (2008)** — realized kernel estimator
+- **Basel Committee (2019)** — FRTB capital requirements
 
 ---
 
 ## License
 
-MIT — see [LICENSE](LICENSE). The paper analyses and code are released for academic and educational use.
+MIT — see [LICENSE](LICENSE). Paper and code released for academic and educational use.
 
 ## Contact
 
