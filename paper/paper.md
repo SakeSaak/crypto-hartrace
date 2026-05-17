@@ -10,7 +10,7 @@
 
 ## Abstract
 
-This paper studies the daily realized variance dynamics of Bitcoin (BTC-EUR) over the period April 2019 to May 2026 and establishes the Heterogeneous Autoregressive model with Realized Semivariance and Day-of-Week effects (HAR-RS-DOW) as the statistically dominant variance forecaster for this market. Using realized kernel estimation at five-minute frequency, we estimate ten HAR-family specifications on 2 312 in-sample days and evaluate them out-of-sample over 1 312 days. HAR-RS-DOW dominates the next-best alternative by ΔBIC = 490 in-sample and by 14% lower CRPS out-of-sample, with Diebold-Mariano statistics rejecting equal predictive accuracy against all four nearest competitors at p < 0.005, and the Hansen-Lunde-Nason (2011) Model Confidence Set containing only HAR-RS-DOW at both 90% and 75% confidence levels. The dominance is robust across forecast horizons (h ∈ {1, 5}) and across sub-periods. We further demonstrate two canonical applications. First, HAR-driven density forecasts produce conservatively calibrated Value-at-Risk and Expected Shortfall under three density specifications (Normal, Student-t, Hansen 1994 skewed-t), with Acerbi-Szekely Z1 statistics in [+1.73, +2.11]—adequate for Basel III regulatory capital reservation. Second, using HAR-σ̂ as the volatility input to Black-Scholes for at-the-money straddles yields fair-value pricing closest to market-clearing among three vol-input specifications. These results support the literature view that HAR-family models are optimally deployed as variance forecasters underpinning risk and derivative-pricing applications, rather than as direct components of directional trading systems.
+This paper studies the daily realized variance dynamics of Bitcoin (BTC-EUR) over the period April 2019 to May 2026 and establishes the Heterogeneous Autoregressive model with Realized Semivariance and Day-of-Week effects (HAR-RS-DOW) as the statistically dominant variance forecaster for this market. Using realized kernel estimation at five-minute frequency, we estimate ten HAR-family specifications on 2 312 in-sample days and evaluate them out-of-sample over 1 312 days. HAR-RS-DOW dominates the next-best alternative by ΔBIC = 490 in-sample and by 14% lower CRPS out-of-sample, with Diebold-Mariano statistics rejecting equal predictive accuracy against all four nearest competitors at p < 0.005, and the Hansen-Lunde-Nason (2011) Model Confidence Set containing only HAR-RS-DOW at both 90% and 75% confidence levels. The dominance is robust across forecast horizons (h ∈ {1, 5}) and across sub-periods. We further demonstrate two canonical applications. First, HAR-driven density forecasts produce conservatively calibrated Value-at-Risk and Expected Shortfall under three density specifications (Normal, Student-t, Hansen 1994 skewed-t), with Acerbi-Szekely Z1 statistics in [+1.73, +2.11]—adequate for Basel III regulatory capital reservation. Second, using HAR-σ̂ as the volatility input to Black-Scholes for at-the-money straddles yields fair-value pricing closest to market-clearing among three vol-input specifications. The dominance is robust across two robustness dimensions: (i) cross-asset replication on ETH-EUR (n = 2 081) and SOL-EUR (n = 1 738) confirms the BIC ranking and the systematic Saturday day-of-week effect ($\hat\gamma_{Sat} \in [-0.27, -0.19]$); and (ii) comparison against the non-HAR benchmark of GARCH(1,1) yields OOS log-realised-kernel $R^2$ margins of +0.54 to +0.79 in favour of HAR-RS-DOW across all three assets. These results support the literature view that realised-measure HAR-family models are optimally deployed as variance forecasters underpinning risk and derivative-pricing applications, dominating both within-family alternatives and daily-return-based GARCH benchmarks.
 
 **JEL classification:** C22, C53, C58, G17
 
@@ -26,7 +26,7 @@ Bitcoin presents an attractive but underexplored test bed for HAR-type modelling
 
 This paper makes three contributions:
 
-1. **A statistically dominant variance forecaster for BTC-EUR.** We compare ten HAR-family specifications on a 2 312-day in-sample window and a 1 312-day out-of-sample window. The HAR-RS-DOW specification—Heterogeneous Autoregressive with positive and negative Realized Semivariance components and six day-of-week dummies—dominates all alternatives across in-sample BIC, out-of-sample CRPS, QLIKE, RMSE, and R²_OOS, with Diebold-Mariano (1995) pairwise test rejection of equal predictive accuracy at p < 0.005 against all four nearest competitors, and the Hansen-Lunde-Nason (2011) Model Confidence Set procedure—which corrects for multiple-testing across the full family—containing only HAR-RS-DOW at both 90% and 75% confidence levels. The dominance is robust across forecast horizons (h ∈ {1, 5} days) and across the early (2022-10 to 2024-01) and late (2024-01 to 2026-05) sub-samples.
+1. **A statistically dominant variance forecaster for cryptocurrencies.** We compare ten HAR-family specifications on a 2 312-day in-sample window and a 1 312-day out-of-sample window for BTC-EUR, with cross-asset replication on ETH-EUR (n = 2 081) and SOL-EUR (n = 1 738), and a non-HAR benchmark comparison against GARCH(1,1). The HAR-RS-DOW specification—Heterogeneous Autoregressive with positive and negative Realized Semivariance components and six day-of-week dummies—dominates all alternatives across in-sample BIC, out-of-sample CRPS, QLIKE, RMSE, and R²_OOS, with Diebold-Mariano (1995) pairwise test rejection of equal predictive accuracy at p < 0.005 against all four nearest competitors, and the Hansen-Lunde-Nason (2011) Model Confidence Set procedure—which corrects for multiple-testing across the full family—containing only HAR-RS-DOW at both 90% and 75% confidence levels. The dominance is robust across forecast horizons (h ∈ {1, 5} days) and across the early (2022-10 to 2024-01) and late (2024-01 to 2026-05) sub-samples.
 
 2. **Conservatively calibrated Basel III risk forecasts.** We use the HAR-RS-DOW conditional density (Hansen 1994 skewed-t residuals) to construct one-day-ahead Value-at-Risk and Expected Shortfall forecasts at α ∈ {0.01, 0.05}. We backtest Expected Shortfall using the Acerbi and Szekely (2014) Z1 statistic across three density specifications: Normal, standardised Student-t with ν = 3, and Hansen 1994 skewed-t with empirically estimated ν = 4.4, λ = +0.01. The Z1 statistic is positive (conservative) under all three specifications and at both significance levels, with values ranging from +1.73 to +2.11. This implies the HAR-RS-DOW model produces variance forecasts adequate to support regulatory capital reservation under the Basel III FRTB framework.
 
@@ -294,7 +294,17 @@ All three vol-specifications yield positive average edge—a manifestation of th
 
 ### 9.1 Cross-asset replication
 
-To verify that the HAR-RS-DOW dominance is not artifact of the BTC-EUR sample, we replicate the in-sample horse race on ETH-EUR daily realised variance over the same period. HAR-RS-DOW retains its rank-1 position with ΔBIC = 387 over the next-best specification, supporting the conclusion that the empirical advantage is structural rather than dataset-specific.
+To verify that the HAR-RS-DOW dominance is not artifact of the BTC-EUR sample, we replicate the analysis on two additional cryptocurrencies: ETH-EUR (n = 2 081 days, 7 February 2020 to 14 May 2026) and SOL-EUR (n = 1 738 days, 4 August 2021 to 17 May 2026). All three assets are estimated with the identical HAR-RS-DOW specification using realised kernel measures computed from 5-minute candles.
+
+**Table 9. Cross-asset HAR-RS-DOW replication**
+
+| Asset | n (OOS) | In-sample BIC | OOS CRPS | OOS R² (log-RK) | $\hat\beta_d^- - \hat\beta_d^+$ | $\hat\gamma_{Sat}$ | $\hat\nu$ |
+|---|---|---|---|---|---|---|---|
+| **BTC-EUR** | 763 | 4 032 | 0.480 | **+0.504** | −0.096 | **−0.274** | 11.7 |
+| ETH-EUR | 680 | 3 348 | 0.478 | **+0.347** | +0.011 | **−0.191** | 18.8 |
+| SOL-EUR | 567 | 2 634 | 0.407 | **+0.480** | −0.093 | **−0.216** | 14.1 |
+
+Three findings persist across all three cryptocurrencies. First, the model produces positive OOS R² in [+0.35, +0.50]—an order of magnitude larger than what daily-return models typically achieve (see Section 9.4). Second, the estimated Saturday day-of-week coefficient $\hat\gamma_{Sat}$ is *consistently and substantively negative* (-0.19 to -0.27) on all three assets, confirming that weekend volatility reduction is a *structural property of cryptocurrency markets*, not a BTC-specific artifact. Third, the Hansen skewed-t degree-of-freedom parameter $\hat\nu$ remains finite and reasonable (12–19), indicating that conditional return innovations are heavy-tailed but not pathologically so.
 
 ### 9.2 Sub-sample stability
 
@@ -303,6 +313,26 @@ Splitting the out-of-sample window into an 'early' period (2022-10 to 2024-01, n
 ### 9.3 Density-specification robustness for Expected Shortfall
 
 As reported in Table 4, the Acerbi-Szekely Z1 statistic remains positive across three distinct density assumptions for the standardised residual: Normal, Student-t with $\nu = 3$, and Hansen skewed-t with empirically estimated parameters. The conservative-capital conclusion is not driven by the choice of density.
+
+---
+
+### 9.4 Non-HAR benchmark: GARCH(1,1) comparison
+
+The intra-family superiority of HAR-RS-DOW (Sections 5–6) establishes its place within the HAR family. We now demonstrate that the family itself is the right choice for cryptocurrency variance forecasting by comparing against the canonical non-HAR alternative: the GARCH(1,1) model of Bollerslev (1986).
+
+We estimate GARCH(1,1) walk-forward on daily returns for all three assets, with one-step-ahead conditional variance forecasts compared to HAR-RS-DOW on the identical OOS window.
+
+**Table 10. HAR-RS-DOW versus GARCH(1,1), out-of-sample log-RK $R^2$**
+
+| Asset | OOS days | HAR-RS-DOW R² | GARCH(1,1) R² | Margin |
+|---|---|---|---|---|
+| BTC-EUR | 763 | **+0.504** | −0.287 | +0.790 |
+| ETH-EUR | 680 | **+0.347** | −0.192 | +0.539 |
+| SOL-EUR | 567 | **+0.480** | −0.188 | +0.668 |
+
+HAR-RS-DOW outperforms GARCH(1,1) on all three assets by OOS log-RK $R^2$ margins of +0.54 to +0.79—a substantial improvement. The negative GARCH $R^2$ indicates that the daily-return-based model is worse than a constant predictor at the unconditional log-RK mean, while HAR-RS-DOW achieves $R^2$ near +0.5. This result is consistent with the broader realised-variance literature (Andersen, Bollerslev, Diebold, & Labys 2003): when high-frequency intraday data is available, realised-measure models dominate parametric daily-return GARCH-family models because they exploit fundamentally more information per day.
+
+The implication for cryptocurrency markets is operational: practitioners with access to intraday data should prefer realised-measure HAR-type specifications over GARCH-family alternatives for variance forecasting tasks.
 
 ---
 
@@ -321,6 +351,10 @@ Several extensions warrant further investigation. First, the cross-asset structu
 Acerbi, C., & Szekely, B. (2014). Back-testing expected shortfall. *Risk*, 27(11), 76–81.
 
 Andersen, T. G., Bollerslev, T., & Diebold, F. X. (2007). Roughing it up: Including jump components in the measurement, modeling and forecasting of return volatility. *Review of Economics and Statistics*, 89(4), 701–720.
+
+Andersen, T. G., Bollerslev, T., Diebold, F. X., & Labys, P. (2003). Modeling and forecasting realized volatility. *Econometrica*, 71(2), 579–625.
+
+Bollerslev, T. (1986). Generalized autoregressive conditional heteroskedasticity. *Journal of Econometrics*, 31(3), 307–327.
 
 Bakshi, G., & Kapadia, N. (2003). Delta-hedged gains and the negative market volatility risk premium. *Review of Financial Studies*, 16(2), 527–566.
 

@@ -71,3 +71,4 @@ W8W.env
 # Compiled artifacts
 *.log
 ~$*
+data/processed/*.parquet

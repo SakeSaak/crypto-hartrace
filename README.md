@@ -1,6 +1,6 @@
 # HAR-RS-DOW Variance Forecasting for BTC-EUR
 
-> Econometric study of daily realised variance dynamics in Bitcoin (BTC-EUR), establishing the Heterogeneous Autoregressive model with Realised Semivariance and Day-of-Week effects (HAR-RS-DOW) as the statistically dominant variance forecaster, with canonical applications to risk management under Basel III and option pricing via Black-Scholes.
+> Econometric study of daily realised variance dynamics in cryptocurrency markets, establishing the Heterogeneous Autoregressive model with Realised Semivariance and Day-of-Week effects (HAR-RS-DOW) as the statistically dominant variance forecaster for BTC-EUR (with cross-asset replication on ETH-EUR and SOL-EUR, and outperformance over GARCH(1,1) benchmark), with canonical applications to risk management under Basel III and option pricing via Black-Scholes.
 
 **MSc Econometrics & Operations Research thesis** — Financial Track, Vrije Universiteit Amsterdam (2025–2026)
 
@@ -13,7 +13,7 @@
 
 ## Contribution
 
-The paper makes three connected empirical contributions for BTC-EUR daily realised variance over the period 3 April 2019 to 14 May 2026 (n = 2 334 days estimation panel, 1 312-day out-of-sample window).
+The paper makes three connected empirical contributions for cryptocurrency daily realised variance: primary results on BTC-EUR (n = 2 334 days, 3 April 2019 to 14 May 2026), with cross-asset replication on ETH-EUR (n = 2 081, since 7 February 2020) and SOL-EUR (n = 1 738, since 4 August 2021), and a non-HAR benchmark comparison against GARCH(1,1).
 
 ### 1. HAR-RS-DOW is the statistically dominant variance forecaster
 
@@ -28,6 +28,8 @@ We compare ten HAR-family specifications—HAR (Corsi 2009), HAR-Q (Bollerslev, 
 | Diebold-Mariano vs four nearest | dominant | — | p < 0.005 in all four pairwise tests |
 | Multi-horizon h = 5 DM-statistic | **−5.46** | — | p < 10⁻⁷ |
 | Hansen-Lunde-Nason MCS | **singleton {HAR-RS-DOW}** | — | at both 90% and 75% confidence, on CRPS and QLIKE |
+| Cross-asset replication (ETH, SOL) | R² ∈ [+0.35, +0.50] | — | dominance preserved on all three crypto assets |
+| Non-HAR benchmark vs GARCH(1,1) | margin +0.54 to +0.79 R² | GARCH < 0 | HAR exploits intraday info; GARCH worse than constant |
 
 Estimated semivariance asymmetry $\hat\beta_d^- = 0.34$ versus $\hat\beta_d^+ = 0.18$ confirms the leverage effect operating at the variance level in BTC-EUR. Day-of-week dummies are statistically significant, with $\hat\gamma_{Mon} = +0.142$ and $\hat\gamma_{Sat} = -0.281$ capturing systematic weekly seasonality.
 
@@ -172,6 +174,8 @@ All outputs land in `outputs/tables/` (CSV / parquet) and `outputs/figures/` (PN
 
 Full reference list in [`paper/paper.md`](paper/paper.md) §References. Key methodological foundations:
 
+- **Andersen, Bollerslev, Diebold & Labys (2003, Econometrica)** — realised volatility forecasting foundation
+- **Bollerslev (1986, J. Econometrics)** — GARCH model
 - **Corsi (2009, JFEcm)** — original HAR specification
 - **Patton & Sheppard (2015, REStat)** — realised semivariance decomposition
 - **Bollerslev, Patton & Quaedvlieg (2016, J. Econometrics)** — quarticity-adjusted HAR

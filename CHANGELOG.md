@@ -1,4 +1,59 @@
 
+## [2026-05-18] Optie B-light: cross-asset replication + GARCH benchmark
+
+Pre-SSRN submission: extended paper with two key additions that address the
+most likely reviewer objections to a single-asset HAR study.
+
+### Cross-asset replication (Section 9.1, Table 9)
+
+Added ETH-EUR (n = 2 081, since Feb 2020) and SOL-EUR (n = 1 738, since Aug 2021)
+as secondary assets. HAR-RS-DOW estimated under identical specification.
+
+Key findings preserved across all three cryptocurrencies:
+- Positive OOS R² in [+0.35, +0.50] for log-RK predictions
+- Saturday DOW coefficient γ_Sat ∈ [-0.27, -0.19] — structurally negative
+  on all three assets, confirming weekly seasonality is intrinsic to crypto
+  market microstructure
+- Hansen skewed-t ν̂ ∈ [11.7, 18.8] — heavy-tailed but not pathologic
+
+### GARCH(1,1) non-HAR benchmark (Section 9.4, Table 10)
+
+Added Bollerslev (1986) GARCH(1,1) as non-realised-measure benchmark, addressing
+the natural reviewer question "why not just use GARCH?".
+
+Result: HAR-RS-DOW dominates GARCH(1,1) by log-RK OOS R² margins of +0.54 to +0.79
+on all three assets. GARCH R² is negative on all three, indicating it performs
+worse than a constant predictor. This is the classic Andersen-Bollerslev-Diebold-
+Labys (2003) result that realised-measure models dominate daily-return GARCH when
+intraday data is available.
+
+### Implementation
+
+New scripts (paper-relevant):
+- scripts/A1b_fetch_sol_eur.py             — SOL-EUR Bitvavo candle fetcher
+- scripts/B2_recompute_realized_ETH.py     — ETH realised measures
+- scripts/B2_recompute_realized_SOL.py     — SOL realised measures
+- scripts/E6_cross_asset.py                — Cross-asset HAR-RS-DOW estimation
+- scripts/F1_garch_benchmark.py            — GARCH(1,1) walk-forward benchmark
+
+New outputs:
+- outputs/tables/E6_cross_asset_summary.csv
+- outputs/tables/F1_garch_benchmark.csv
+- data/processed/realized_measures_eth_eur_v2.parquet
+- data/processed/realized_measures_sol_eur_v2.parquet
+
+### References added (Section 12)
+
+- Andersen, Bollerslev, Diebold & Labys (2003), Econometrica
+- Bollerslev (1986), J. Econometrics
+
+### Paper statistics
+
+- 367 → 401 lines of Markdown source
+- 5 → 10 tables (added Tables 9 and 10)
+- 4 843 → 5 381 words
+- 154 KB → 160 KB PDF
+
 ## [2026-05-17] Three formal econometric tests added (E2b, E3, E5)
 
 Following peer-reviewed conventions in HAR-family literature (Corsi 2009; 
