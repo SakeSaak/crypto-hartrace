@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.sakesaakstra.btc-trader</string>
+    
+    <!-- MODE: --paper (default voor validatie). Switch naar --live na 
+         minstens 1-2 weken paper-trading zonder issues. Drie kunnen:
+         --paper    = volledige simulatie, geen API-keys nodig (start hier)
+         --dry-run  = leest échte Bitvavo balance, plaatst GEEN orders
+         --live     = plaatst écht orders. Vereist LIVE_TRADING=true + DRY_RUN=false in env -->
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/sakesaakstra/Desktop/crypto_hartrace/scripts/btc_runner.sh</string>
+        <string>--paper</string>
+    </array>
+    
+    <!-- Dagelijks om 22:05 UTC (00:05 CEST / 23:05 CET) -->
+    <!-- BTC-dagsluiting in academic-sense is 00:00 UTC, dus 22:05 UTC is 
+         vroeg genoeg om realized variance van 'gisteren' compleet te hebben -->
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Hour</key>
+        <integer>22</integer>
+        <key>Minute</key>
+        <integer>5</integer>
+    </dict>
+    
+    <key>StandardOutPath</key>
+    <string>/Users/sakesaakstra/Desktop/crypto_hartrace/logs/launchd.out.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/sakesaakstra/Desktop/crypto_hartrace/logs/launchd.err.log</string>
+    
+    <!-- Voorkom dat het script blijft hangen als de Mac slaapt;
+         als deze tijd gemist wordt door slaap, draait het bij wakker worden -->
+    <key>RunAtLoad</key>
+    <false/>
+</dict>
+</plist>

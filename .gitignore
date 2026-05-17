@@ -1,0 +1,42 @@
+# === GEVOELIGE DATA — NOOIT COMMITTEN ===
+*.env
+.env
+.env.*
+**/credentials.json
+**/secrets.json
+W8W.env
+api_keys.txt
+
+# === LIVE TRADING STATE ===
+state/
+logs/
+trades_*.jsonl
+trader_*.log
+
+# === LARGE DATA (reproducerbaar via fetch script) ===
+data/raw/*.parquet
+data/processed/*.parquet
+*.pkl
+
+# === Python ===
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+*.egg-info/
+.ipynb_checkpoints/
+.mypy_cache/
+
+# === macOS / IDE ===
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*~
+
+# === Build artifacts ===
+build/
+dist/
+*.tar.gz
