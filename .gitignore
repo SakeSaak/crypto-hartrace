@@ -1,42 +1,73 @@
-# === GEVOELIGE DATA — NOOIT COMMITTEN ===
-*.env
-.env
-.env.*
-**/credentials.json
-**/secrets.json
-W8W.env
-api_keys.txt
-
-# === LIVE TRADING STATE ===
-state/
-logs/
-trades_*.jsonl
-trader_*.log
-
-# === LARGE DATA (reproducerbaar via fetch script) ===
-data/raw/*.parquet
-data/processed/*.parquet
-*.pkl
-
-# === Python ===
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
-.pytest_cache/
-.coverage
-htmlcov/
+*.so
+.Python
 *.egg-info/
-.ipynb_checkpoints/
-.mypy_cache/
+.pytest_cache/
 
-# === macOS / IDE ===
+# Data files (too large for git, fetched via API)
+data/raw/*.parquet
+data/processed/*.parquet
+
+# OS
 .DS_Store
+
+# Editor
 .vscode/
 .idea/
 *.swp
-*~
 
-# === Build artifacts ===
-build/
-dist/
-*.tar.gz
+# =================================================================
+# TRADING BOT — engineering implementation, NOT part of the paper
+# All trading-related code lives on the operator's machine but is
+# excluded from the public repository to maintain academic focus.
+# =================================================================
+
+# Bot source code
+src/hartrace/live/
+
+# Bot R&D scripts (trading-strategy investigation, not paper)
+scripts/H7_*.py
+scripts/H8_*.py
+scripts/H9_*.py
+scripts/H10_*.py
+scripts/H11_*.py
+scripts/btc_live_trader.py
+scripts/btc_daily_data_update.py
+
+# Bot launchd configurations
+launchd/
+
+# Bot runtime state (private)
+state/
+logs/
+
+# Bot documentation
+bot/
+docs/PAPER_TO_LIVE_RUNBOOK.md
+
+# Bot-relevant outputs (H7-H11 results)
+outputs/tables/H7_*
+outputs/tables/H8_*
+outputs/tables/H9_*
+outputs/tables/H10_*
+outputs/tables/H11_*
+outputs/figures/H7_*
+outputs/figures/H8_*
+outputs/figures/H9_*
+outputs/figures/H10_*
+outputs/figures/H11_*
+
+# Bot-relevant outputs (publishing drafts)
+outputs/publishing/
+
+# Personal env files (NEVER commit secrets)
+.env
+*.env
+W8W.env
+
+# Compiled artifacts
+*.log
+~$*
